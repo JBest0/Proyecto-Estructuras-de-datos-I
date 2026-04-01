@@ -1,0 +1,5 @@
+{
+    "java.project.referencedLibraries": [
+        "D:/Descargas Google/openjfx-26_windows-x64_bin-sdk/javafx-sdk-26/lib/**/*.jar"
+    ]
+}
