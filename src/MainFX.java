@@ -17,13 +17,13 @@ public class MainFX extends Application {
         Group raiz = new Group();  //grupo para modificar (aun no lo entiendo muy bien)
 
         
-        Image icono = new Image("file:Logo.png");  //icono de la ventana
+        Image icono = new Image("file:media/Logo.png");  //icono de la ventana
 
 
         Scene escenario = new Scene(raiz, 1136, 944);  //Escenario, su tamaño esta definido aquí
 
 
-        Image logo = new Image("file:Logo.png");        // Imagen de fondo
+        Image logo = new Image("file:media/Logo.png");        // Imagen de fondo
         ImageView verLogo = new ImageView(logo);   
         verLogo.setX(0);                           //Posicionamiento de la imagen de fondo
         verLogo.setY(0);
@@ -51,6 +51,7 @@ public class MainFX extends Application {
         raiz.getChildren().add(botonInicio);   //Aqui se crea el boton, se pone de ultimo para que "sobresalga"
 
     
+        INICIO.setOnCloseRequest(e -> javafx.application.Platform.exit());
         INICIO.show(); //Funcion que inicia la ventana con las caracteristicas
 
         
