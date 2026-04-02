@@ -9,7 +9,7 @@
             "name": "Run JavaFX",
             "request": "launch",
             "mainClass": "MainFX",
-            "vmArgs": "--module-path \"D:/Descargas Google/openjfx-26_windows-x64_bin-sdk/javafx-sdk-26/lib\" --add-modules javafx.controls,javafx.fxml"
+            "vmArgs": "--module-path \"C:\\javafx-sdk-26\\lib\" --add-modules javafx.controls,javafx.fxml,javafx.graphics,javafx.media"
         }
     ]
 }
