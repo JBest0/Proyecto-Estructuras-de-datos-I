@@ -11,19 +11,74 @@ import javafx.stage.Stage;
 
 public class SeleccionFX {
 
-    public static Scene crearPantalla(Stage inicio, Scene escenaAnterior) {
+    String[] nombrePersonajes = {"Captain Firewall", "Byte Ninja", "Malware Muncher",
+    "Crypto Llama", "Packet Pirate", "Null Pointer Paladin"};
+
+    String[] imagenPersonajes = {"Captain Firewall.png", "Byte Ninja.png", "Malware Muncher.png",
+    "Crypto Llama.png", "Packet Pirate.png", "Null Pointer Paladin.png"};
+
+    int indiceSeleccion = 0;
+
+    public Scene crearPantalla(Stage inicio, Scene escenaAnterior) {
 
         Group raizSeleccion = new Group();
         Scene escenario2 = new Scene(raizSeleccion,1136,944,Color.BEIGE);
 
+        //Imagen de personajes
+        Image sprites = new Image(imagenPersonajes[indiceSeleccion]);
+        ImageView verSprites = new ImageView(sprites);
+        verSprites.setLayoutX(420);
+        verSprites.setLayoutY(310);
+
+
+        //Imagen fondo
+        Image fondo = new Image("Fondo Seleccion.png");
+        ImageView verfondo = new ImageView(fondo);
+        
+
+        //TEXTO de arriba
+        Label texto = new Label("Selecciona a tu personaje");
+        texto.setLayoutX(500);
+
+        Label nombres = new Label(nombrePersonajes[indiceSeleccion]);
+        nombres.setStyle("-fx-font-size: 30px; -fx-text-fill: white;");
+        nombres.setLayoutX(470);
+        nombres.setLayoutY(250);
+
         //BOTONES y su configuracion
         Button derecha = new Button(">");
-        Button izquierda = new Button("<");
-        derecha.setLayoutX(836);
+        
+        derecha.setLayoutX(800);
         derecha.setLayoutY(450);
-        izquierda.setLayoutX(336);
+
+        derecha.setOnAction(e -> {
+            indiceSeleccion++;
+
+            if (indiceSeleccion >= nombrePersonajes.length){
+                indiceSeleccion = 0;
+            }
+            nombres.setText(nombrePersonajes[indiceSeleccion]);
+            Image nuevoSprite = new Image(imagenPersonajes[indiceSeleccion]);
+            verSprites.setImage(nuevoSprite);
+        });
+
+        Button izquierda = new Button("<");
+
+        izquierda.setLayoutX(300);
         izquierda.setLayoutY(450);
 
+        izquierda.setOnAction(e ->{
+            indiceSeleccion--;
+            
+            if (indiceSeleccion<0){
+                indiceSeleccion = 5;
+            }
+            nombres.setText(nombrePersonajes[indiceSeleccion]);
+            Image nuevoSprite = new Image(imagenPersonajes[indiceSeleccion]);
+            verSprites.setImage(nuevoSprite);
+        });
+
+        
         Button volver = new Button("Volver");
         volver.setOnAction(e -> {
             inicio.setScene(escenaAnterior);
@@ -32,17 +87,15 @@ public class SeleccionFX {
         volver.setLayoutY(0);
 
 
-        //TEXTO de arriba
-        Label texto = new Label("Selecciona a tu personaje");
-        texto.setLayoutX(550);
-
 
         //añadiendo lo visual
+        raizSeleccion.getChildren().add(verfondo);
         raizSeleccion.getChildren().add(derecha);
         raizSeleccion.getChildren().add(izquierda);
         raizSeleccion.getChildren().add(volver);
         raizSeleccion.getChildren().add(texto);
-
+        raizSeleccion.getChildren().add(nombres);
+        raizSeleccion.getChildren().add(verSprites);
         return escenario2;
 
 
