@@ -29,13 +29,16 @@ public class MainFX extends Application {
         verLogo.setY(0);
 
 
+        SeleccionFX pantallaSeleccion =new SeleccionFX(); //Debido a que el metodo "crear pantalla" no es static hay que crear este objeto
+
+
 
         Button botonInicio = new Button("Iniciar"); //Boton de inicio
         botonInicio.setLayoutX(545);                //Posicionamiento en el eje X y Y del boton
         botonInicio.setLayoutY(500);
         botonInicio.setPrefSize(70,50);             //Dimensiones del boton.
         botonInicio.setOnAction(e -> {              //Al realizar el evento presionar boton realiza el metodo de adentro
-            INICIO.setScene(SeleccionFX.crearPantalla(INICIO,escenario));
+            INICIO.setScene(pantallaSeleccion.crearPantalla(INICIO,escenario));
         });
 
         
