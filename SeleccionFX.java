@@ -86,6 +86,15 @@ public class SeleccionFX {
         volver.setLayoutX(0);
         volver.setLayoutY(0);
 
+        Button continuar = new Button("Elegir mapa");
+        continuar.setLayoutX(520);
+        continuar.setLayoutY(760);
+        continuar.setPrefSize(100, 40);
+        continuar.setOnAction(e -> {
+            MapSeleccionFX pantallaMapas = new MapSeleccionFX();
+            inicio.setScene(pantallaMapas.crearPantalla(inicio, escenario2, nombrePersonajes[indiceSeleccion]));
+        });
+
 
 
         //añadiendo lo visual
@@ -93,6 +102,7 @@ public class SeleccionFX {
         raizSeleccion.getChildren().add(derecha);
         raizSeleccion.getChildren().add(izquierda);
         raizSeleccion.getChildren().add(volver);
+        raizSeleccion.getChildren().add(continuar);
         raizSeleccion.getChildren().add(texto);
         raizSeleccion.getChildren().add(nombres);
         raizSeleccion.getChildren().add(verSprites);
