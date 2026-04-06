@@ -1,11 +1,9 @@
-import javafx.application.Application;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
@@ -14,8 +12,8 @@ public class SeleccionFX {
     String[] nombrePersonajes = {"Captain Firewall", "Byte Ninja", "Malware Muncher",
     "Crypto Llama", "Packet Pirate", "Null Pointer Paladin"};
 
-    String[] imagenPersonajes = {"Captain Firewall.png", "Byte Ninja.png", "Malware Muncher.png",
-    "Crypto Llama.png", "Packet Pirate.png", "Null Pointer Paladin.png"};
+    String[] imagenPersonajes = {"media/Captain Firewall.png", "media/Byte Ninja.png", "media/Malware Muncher.png",
+    "media/Crypto Llama.png", "media/Packet Pirate.png", "media/Null Pointer Paladin.png"};
 
     int indiceSeleccion = 0;
 
@@ -25,14 +23,14 @@ public class SeleccionFX {
         Scene escenario2 = new Scene(raizSeleccion,1136,944,Color.BEIGE);
 
         //Imagen de personajes
-        Image sprites = new Image(imagenPersonajes[indiceSeleccion]);
+        Image sprites = new Image("file:" + imagenPersonajes[indiceSeleccion]);
         ImageView verSprites = new ImageView(sprites);
         verSprites.setLayoutX(420);
         verSprites.setLayoutY(310);
 
 
         //Imagen fondo
-        Image fondo = new Image("Fondo Seleccion.png");
+        Image fondo = new Image("file:media/Fondo Seleccion.png");
         ImageView verfondo = new ImageView(fondo);
         
 
@@ -58,7 +56,7 @@ public class SeleccionFX {
                 indiceSeleccion = 0;
             }
             nombres.setText(nombrePersonajes[indiceSeleccion]);
-            Image nuevoSprite = new Image(imagenPersonajes[indiceSeleccion]);
+            Image nuevoSprite = new Image("file:" + imagenPersonajes[indiceSeleccion]);
             verSprites.setImage(nuevoSprite);
         });
 
@@ -74,7 +72,7 @@ public class SeleccionFX {
                 indiceSeleccion = 5;
             }
             nombres.setText(nombrePersonajes[indiceSeleccion]);
-            Image nuevoSprite = new Image(imagenPersonajes[indiceSeleccion]);
+            Image nuevoSprite = new Image("file:" + imagenPersonajes[indiceSeleccion]);
             verSprites.setImage(nuevoSprite);
         });
 
@@ -86,6 +84,15 @@ public class SeleccionFX {
         volver.setLayoutX(0);
         volver.setLayoutY(0);
 
+        Button continuar = new Button("Elegir mapa");
+        continuar.setLayoutX(520);
+        continuar.setLayoutY(760);
+        continuar.setPrefSize(100, 40);
+        continuar.setOnAction(e -> {
+            MapSeleccionFX pantallaMapas = new MapSeleccionFX();
+            inicio.setScene(pantallaMapas.crearPantalla(inicio, escenario2, nombrePersonajes[indiceSeleccion]));
+        });
+
 
 
         //añadiendo lo visual
@@ -93,6 +100,7 @@ public class SeleccionFX {
         raizSeleccion.getChildren().add(derecha);
         raizSeleccion.getChildren().add(izquierda);
         raizSeleccion.getChildren().add(volver);
+        raizSeleccion.getChildren().add(continuar);
         raizSeleccion.getChildren().add(texto);
         raizSeleccion.getChildren().add(nombres);
         raizSeleccion.getChildren().add(verSprites);
