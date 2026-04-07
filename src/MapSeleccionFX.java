@@ -1,7 +1,3 @@
-import client.engine.GameEngine;
-import client.models.GameConfig;
-import client.models.Player;
-import client.ui.GameScreenFX;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -112,13 +108,11 @@ public class MapSeleccionFX {
             confirmar.setDisable(false);
         });
 
-        confirmar.setOnAction(e -> {
-            GameConfig config = new GameConfig(100, 1.0, 2.0, 10, 100, 1.15, 0.3, 5, 8, 10);
-            Player player = new Player("Player1", avatarSeleccionado, 100);
-            GameEngine engine = new GameEngine(config, player);
+        GameScreenFX pantallaJuego = new GameScreenFX();
 
-            Scene gameScene = GameScreenFX.crearPantalla(inicio, engine);
-            inicio.setScene(gameScene);
+        confirmar.setOnAction(e -> {
+
+            inicio.setScene(pantallaJuego.crearPantalla(inicio,mapaSeleccionado,avatarSeleccionado));
         });
 
         raiz.getChildren().add(titulo);
