@@ -17,7 +17,7 @@ public class SeleccionFX {
 
     int indiceSeleccion = 0;
 
-    public Scene crearPantalla(Stage inicio, Scene escenaAnterior) {
+    public Scene crearPantalla(Stage inicio, Scene escenaAnterior, String username) {
 
         Group raizSeleccion = new Group();
         Scene escenario2 = new Scene(raizSeleccion,1136,944,Color.BEIGE);
@@ -32,7 +32,7 @@ public class SeleccionFX {
         //Imagen fondo
         Image fondo = new Image("file:media/Fondo Seleccion.png");
         ImageView verfondo = new ImageView(fondo);
-        
+
 
         //TEXTO de arriba
         Label texto = new Label("Selecciona a tu personaje");
@@ -45,7 +45,7 @@ public class SeleccionFX {
 
         //BOTONES y su configuracion
         Button derecha = new Button(">");
-        
+
         derecha.setLayoutX(800);
         derecha.setLayoutY(450);
 
@@ -67,7 +67,7 @@ public class SeleccionFX {
 
         izquierda.setOnAction(e ->{
             indiceSeleccion--;
-            
+
             if (indiceSeleccion<0){
                 indiceSeleccion = 5;
             }
@@ -76,7 +76,7 @@ public class SeleccionFX {
             verSprites.setImage(nuevoSprite);
         });
 
-        
+
         Button volver = new Button("Volver");
         volver.setOnAction(e -> {
             inicio.setScene(escenaAnterior);
@@ -90,7 +90,7 @@ public class SeleccionFX {
         continuar.setPrefSize(100, 40);
         continuar.setOnAction(e -> {
             MapSeleccionFX pantallaMapas = new MapSeleccionFX();
-            inicio.setScene(pantallaMapas.crearPantalla(inicio, escenario2, nombrePersonajes[indiceSeleccion]));
+            inicio.setScene(pantallaMapas.crearPantalla(inicio, escenario2, nombrePersonajes[indiceSeleccion], username));
         });
 
 
@@ -109,6 +109,6 @@ public class SeleccionFX {
 
 
     }
-    
-   
+
+
 }

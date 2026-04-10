@@ -10,10 +10,10 @@ public class MainFX extends Application {
 
     @Override
     public void start(Stage INICIO) throws Exception {
- 
+
         Group raiz = new Group();  //grupo para modificar (aun no lo entiendo muy bien)
 
-        
+
         Image icono = new Image("file:media/Logo.png");  //icono de la ventana
 
 
@@ -21,12 +21,12 @@ public class MainFX extends Application {
 
 
         Image logo = new Image("file:media/Logo.png");        // Imagen de fondo
-        ImageView verLogo = new ImageView(logo);   
+        ImageView verLogo = new ImageView(logo);
         verLogo.setX(0);                           //Posicionamiento de la imagen de fondo
         verLogo.setY(0);
 
 
-        SeleccionFX pantallaSeleccion =new SeleccionFX(); //Debido a que el metodo "crear pantalla" no es static hay que crear este objeto
+        LoginFX pantallaLogin = new LoginFX(); // Pantalla de inicio de sesión
 
 
 
@@ -35,11 +35,11 @@ public class MainFX extends Application {
         botonInicio.setLayoutY(500);
         botonInicio.setPrefSize(70,50);             //Dimensiones del boton.
         botonInicio.setOnAction(e -> {              //Al realizar el evento presionar boton realiza el metodo de adentro
-            INICIO.setScene(pantallaSeleccion.crearPantalla(INICIO,escenario));
+            INICIO.setScene(pantallaLogin.crearPantalla(INICIO, escenario));
         });
 
-        
-        
+
+
         INICIO.getIcons().add(icono);          //Aqui se crea el icono de la ventana
         INICIO.setScene(escenario);            //Aqui se crea el escenario
         INICIO.setTitle("Cyber Defense Duel"); //Aqui se pone un titulo personalizado a la ventana
@@ -47,17 +47,17 @@ public class MainFX extends Application {
         raiz.getChildren().add(verLogo);       //Aqui se crea la imagen del fondo en la ventana
         raiz.getChildren().add(botonInicio);   //Aqui se crea el boton, se pone de ultimo para que "sobresalga"
 
-    
+
         INICIO.setOnCloseRequest(e -> javafx.application.Platform.exit());
         INICIO.show(); //Funcion que inicia la ventana con las caracteristicas
 
-        
- 
+
+
     }
 
     public static void main(String[] args) { //Funcion principal de Java la cual sirve para llamar la creacion de la ventana
         launch(args);
     }
 
-    
+
 }

@@ -12,7 +12,7 @@ public class MapSeleccionFX {
 
     private String mapaSeleccionado;
 
-    public Scene crearPantalla(Stage inicio, Scene escenaAnterior, String avatarSeleccionado) {
+    public Scene crearPantalla(Stage inicio, Scene escenaAnterior, String avatarSeleccionado, String username) {
         Group raiz = new Group();
         Scene escena = new Scene(raiz, 1136, 944, Color.BEIGE);
 
@@ -111,8 +111,7 @@ public class MapSeleccionFX {
         GameScreenFX pantallaJuego = new GameScreenFX();
 
         confirmar.setOnAction(e -> {
-
-            inicio.setScene(pantallaJuego.crearPantalla(inicio,mapaSeleccionado,avatarSeleccionado));
+            inicio.setScene(pantallaJuego.crearPantalla(inicio, mapaSeleccionado, avatarSeleccionado, username));
         });
 
         raiz.getChildren().add(titulo);

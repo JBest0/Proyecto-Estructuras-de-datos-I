@@ -29,7 +29,7 @@ public class GameScreenFX {
     private AnimationTimer timerGlobal;
     private boolean gameOver = false;
 
-    public Scene crearPantalla(Stage stagePrincipal, String mapa, String avatar) {
+    public Scene crearPantalla(Stage stagePrincipal, String mapa, String avatar, String username) {
 
         Pane raizJuego = new Pane();
         Scene juego = new Scene(raizJuego, 1136, 944);
@@ -48,7 +48,7 @@ public class GameScreenFX {
         verPersonaje.setPreserveRatio(true);
         verPersonaje.setLayoutX(468);
         verPersonaje.setLayoutY(644);
-        
+
         // ====================== CONTADOR DE TIEMPO ======================
         labelTiempo = new Label("Tiempo: 0:00");
         labelTiempo.setFont(Font.font("Arial", 24));
@@ -68,6 +68,13 @@ public class GameScreenFX {
         labelVida.setTextFill(Color.WHITE);
         labelVida.setLayoutX(20);
         labelVida.setLayoutY(85);
+
+        // ====================== ETIQUETA DE JUGADOR ======================
+        Label labelJugador = new Label("Jugador: " + username);
+        labelJugador.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+        labelJugador.setTextFill(Color.web("#00d084"));
+        labelJugador.setLayoutX(20);
+        labelJugador.setLayoutY(110);
 
         // ====================== GAME OVER ======================
         labelGameOver = new Label("GAME OVER!");
@@ -170,9 +177,9 @@ public class GameScreenFX {
                 if (ahora - attack.getUltimoDisparo() < attack.getCooldown()) return;
                 attack.setUltimoDisparo(ahora);
 
-                ImageView verFirewall = attack.generarAtaque("file:media/Firewall.png", 220, 220, -20, -20, 
+                ImageView verFirewall = attack.generarAtaque("file:media/Firewall.png", 220, 220, -20, -20,
                     raizJuego, verPersonaje, true);
-                
+
                 AnimationTimer moverFirewall = new AnimationTimer() {
                     @Override
                     public void handle(long now) {
@@ -205,7 +212,7 @@ public class GameScreenFX {
                 if (ahora - attack.getUltimoDisparo() < attack.getCooldown()) return;
                 attack.setUltimoDisparo(ahora);
 
-                ImageView verAntivirus = attack.generarAtaque("file:media/Antivirus.png", 100, 130, 
+                ImageView verAntivirus = attack.generarAtaque("file:media/Antivirus.png", 100, 130,
                     30, -20, raizJuego, verPersonaje, false);
 
                 AnimationTimer moverAntivirus = new AnimationTimer() {
@@ -271,7 +278,7 @@ public class GameScreenFX {
         });
 
         // Agregar todos los elementos visibles
-        raizJuego.getChildren().addAll(verMapaSeleccion, verPersonaje, labelTiempo, barraVida, labelVida);
+        raizJuego.getChildren().addAll(verMapaSeleccion, verPersonaje, labelTiempo, barraVida, labelVida, labelJugador);
 
         // Iniciar los timers
         moverEnemigoTimer.start();
