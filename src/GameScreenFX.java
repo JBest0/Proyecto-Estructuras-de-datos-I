@@ -1,224 +1,309 @@
 import javafx.animation.AnimationTimer;
+import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.Pane;
+import javafx.scene.control.Label;
+import javafx.scene.control.ProgressBar;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 
-
- //Pantalla principal de juego en JavaFX.
- 
 public class GameScreenFX {
 
     Ataques attack = new Ataques();
     Enemigos enemy = new Enemigos();
-    
 
-    public Scene crearPantalla(Stage inicio, String mapa,String avatar){
-    
-    //creacion de escena
-    Pane raizJuego = new Pane();
-    Scene juego = new Scene(raizJuego,1136,944);
-    
+    private long tiempoInicio = 0;
+    private Label labelTiempo;
 
+    private double vidaActual = 100.0;
+    private ProgressBar barraVida;
+    private Label labelVida;
+    private Label labelGameOver;
 
-    //creacion del mapa seleccionado
-    Image mapaSeleccion = new Image("file:media/"+mapa+".png");
-    ImageView verMapaSeleccion = new ImageView(mapaSeleccion);
-    verMapaSeleccion.setFitWidth(1136);
-    verMapaSeleccion.setFitHeight(944);
-    verMapaSeleccion.setPreserveRatio(false);
+    private AnimationTimer moverEnemigoTimer;
+    private AnimationTimer timerGlobal;
+    private boolean gameOver = false;
 
+    public Scene crearPantalla(Stage stagePrincipal, String mapa, String avatar) {
 
-    //Creacion del personaje seleccionado
-    Image personaje = new Image("file:media/"+avatar+".png");
-    ImageView verPersonaje = new ImageView(personaje);
-    verPersonaje.setFitWidth(200);
-    verPersonaje.setFitHeight(200);
-    verPersonaje.setPreserveRatio(true);
-    verPersonaje.setLayoutX(468);
-    verPersonaje.setLayoutY(644);
+        Pane raizJuego = new Pane();
+        Scene juego = new Scene(raizJuego, 1136, 944);
 
-    Personaje player = new Personaje();
+        // ====================== MAPA ======================
+        Image mapaSeleccion = new Image("file:media/" + mapa + ".png");
+        ImageView verMapaSeleccion = new ImageView(mapaSeleccion);
+        verMapaSeleccion.setFitWidth(1136);
+        verMapaSeleccion.setFitHeight(944);
 
-
-    ImageView[] enemigoActual = new ImageView[1];
-    String[] tipoEnemigoActual = new String[1];
-    tipoEnemigoActual[0] = enemy.generarTipoAleatorio();
-    enemigoActual[0] = enemy.generarEnemigo(tipoEnemigoActual[0], raizJuego);
-
-    AnimationTimer moverEnemigo = new AnimationTimer(){
-        @Override
-        public void handle(long now){
-            enemigoActual[0].setLayoutY(enemigoActual[0].getLayoutY() + 2);
-
-            if (enemigoActual[0].getLayoutY() > 944){
-                raizJuego.getChildren().remove(enemigoActual[0]);
-
-                tipoEnemigoActual[0] = enemy.generarTipoAleatorio();
-                enemigoActual[0] = enemy.generarEnemigo(tipoEnemigoActual[0],raizJuego);
-            }
-
-        }
-    };
-
-
-    
-
-
-
-    //Funciones durante el juego
-    juego.setOnKeyPressed(e -> {
-
-
-        //Mueve al personaje a la izquierda
-    if (e.getCode() == KeyCode.A) {
-        if (verPersonaje.getLayoutX()> -40){
-            verPersonaje.setLayoutX(verPersonaje.getLayoutX() - player.getVelocidad());
-        }
-    }
-
-    //Mueve al personaje a la derecha
-    if (e.getCode() == KeyCode.D) {
-
-        if (verPersonaje.getLayoutX()< 976){
-        verPersonaje.setLayoutX(verPersonaje.getLayoutX() + player.getVelocidad());
-      }
-    }
-
-    //Genera el ataque "Firewall"
-    if (e.getCode() == KeyCode.Q) {
-
-        long ahora = System.nanoTime();
-        if (ahora - attack.getUltimoDisparo() < attack.getCooldown()){
-            return;
-        }
-        attack.setUltimoDisparo(ahora) ;
-    
-        ImageView verFirewall = attack.generarAtaque("file:media/Firewall.png", 220, 220, -20, -20, 
-            raizJuego, verPersonaje, true);
+        // ====================== PERSONAJE ======================
+        Image personaje = new Image("file:media/" + avatar + ".png");
+        ImageView verPersonaje = new ImageView(personaje);
+        verPersonaje.setFitWidth(200);
+        verPersonaje.setFitHeight(200);
+        verPersonaje.setPreserveRatio(true);
+        verPersonaje.setLayoutX(468);
+        verPersonaje.setLayoutY(644);
         
-        AnimationTimer moverFirewall = new AnimationTimer() {
+        // ====================== CONTADOR DE TIEMPO ======================
+        labelTiempo = new Label("Tiempo: 0:00");
+        labelTiempo.setFont(Font.font("Arial", 24));
+        labelTiempo.setTextFill(Color.WHITE);
+        labelTiempo.setLayoutX(20);
+        labelTiempo.setLayoutY(20);
+
+        // ====================== BARRA DE VIDA ======================
+        barraVida = new ProgressBar(1.0);
+        barraVida.setPrefWidth(300);
+        barraVida.setLayoutX(20);
+        barraVida.setLayoutY(60);
+        barraVida.setStyle("-fx-accent: limegreen;");
+
+        labelVida = new Label("Vida: 100%");
+        labelVida.setFont(Font.font("Arial", 18));
+        labelVida.setTextFill(Color.WHITE);
+        labelVida.setLayoutX(20);
+        labelVida.setLayoutY(85);
+
+        // ====================== GAME OVER ======================
+        labelGameOver = new Label("GAME OVER!");
+        labelGameOver.setFont(Font.font("Arial", FontWeight.BOLD, 72));  // más grande y bold
+        labelGameOver.setTextFill(Color.RED);
+        labelGameOver.setLayoutX(400);   // mejor centrado
+        labelGameOver.setLayoutY(380);
+
+        raizJuego.getChildren().add(labelGameOver);
+
+        // ====================== ENEMIGO ======================
+        ImageView[] enemigoActual = new ImageView[1];
+        String[] tipoEnemigoActual = new String[1];
+
+        // ====================== MOVIMIENTO DEL ENEMIGO (TODO DENTRO DEL TIMER) ======================
+        moverEnemigoTimer = new AnimationTimer() {
+            private boolean primerCiclo = true;
+
             @Override
             public void handle(long now) {
-                attack.moverAtaque(verFirewall);
+                if (gameOver) return;
 
-                if (verFirewall.getLayoutY()+ verFirewall.getFitHeight() < 0){
-                    raizJuego.getChildren().remove(verFirewall);
-                    stop();
+                // === PRIMERA VEZ: Crear el primer enemigo ===
+                if (enemigoActual[0] == null) {
+                    tipoEnemigoActual[0] = enemy.generarTipoAleatorio();
+                    enemigoActual[0] = enemy.generarEnemigo(tipoEnemigoActual[0], raizJuego);
+                    enemigoActual[0].setLayoutY(-280);   // Aparece bien arriba
+                    primerCiclo = true;
                     return;
                 }
 
-                if (tipoEnemigoActual[0].equals("DDoS") && verFirewall.getBoundsInParent().intersects(enemigoActual[0].getBoundsInParent())){
+                // Mover enemigo hacia abajo
+                enemigoActual[0].setLayoutY(enemigoActual[0].getLayoutY() + 2);
 
-                    raizJuego.getChildren().removeAll(verFirewall, enemigoActual[0]);
+                // Saltar verificación en el primer ciclo después de spawnear
+                if (primerCiclo) {
+                    primerCiclo = false;
+                    return;
+                }
 
+                // Verificar si llegó al fondo
+                if (enemigoActual[0].getLayoutY() > 780) {   // Ajusta este número (más alto = llega más abajo)
+
+                    raizJuego.getChildren().remove(enemigoActual[0]);
+
+                    // Bajar vida
+                    vidaActual -= 60;
+                    if (vidaActual < 0) vidaActual = 0;
+                    actualizarBarraVida();
+
+                    // Crear nuevo enemigo
                     tipoEnemigoActual[0] = enemy.generarTipoAleatorio();
                     enemigoActual[0] = enemy.generarEnemigo(tipoEnemigoActual[0], raizJuego);
-                    stop();
+                    enemigoActual[0].setLayoutY(-280);
+
+                    primerCiclo = true;   // Reset para el siguiente
                 }
             }
         };
 
-        moverFirewall.start();
-
-    }
-
-
-
-    //Genera el ataque "Antivirus"
-    if (e.getCode()== KeyCode.W) {
-
-        long ahora = System.nanoTime();
-        if (ahora - attack.getUltimoDisparo() < attack.getCooldown()){
-            return;
-        }
-        attack.setUltimoDisparo(ahora) ;
-
-        ImageView verAntivirus = attack.generarAtaque("file:media/Antivirus.png", 100, 130, 
-        30, -20, raizJuego, verPersonaje, false);
-
-
-        AnimationTimer moverAntivirus = new AnimationTimer() {
+        // ====================== TIMER GLOBAL (TIEMPO) ======================
+        timerGlobal = new AnimationTimer() {
             @Override
             public void handle(long now) {
-                attack.moverAtaque(verAntivirus);
+                if (tiempoInicio == 0) tiempoInicio = now;
+                if (gameOver) return;
 
-                if (verAntivirus.getLayoutY()+ verAntivirus.getFitHeight() < 0){
-                    raizJuego.getChildren().remove(verAntivirus);
-                    stop();
-                    return;
-                }
-                if (tipoEnemigoActual[0].equals("Malware") && verAntivirus.getBoundsInParent().intersects(enemigoActual[0].getBoundsInParent())){
+                long segundosTotal = (now - tiempoInicio) / 1_000_000_000;
+                long minutos = segundosTotal / 60;
+                long segundos = segundosTotal % 60;
 
-                    raizJuego.getChildren().removeAll(verAntivirus, enemigoActual[0]);
-
-                    tipoEnemigoActual[0] = enemy.generarTipoAleatorio();
-                    enemigoActual[0] = enemy.generarEnemigo(tipoEnemigoActual[0], raizJuego);
-                    stop();
-                }
+                labelTiempo.setText(String.format("Tiempo: %d:%02d", minutos, segundos));
             }
         };
-        moverAntivirus.start();
 
+        // ====================== CONTROLES DE TECLADO ======================
+        juego.setOnKeyPressed(e -> {
+            if (gameOver) {
+                if (e.getCode() == KeyCode.SPACE) {
+                    volverAlMenu(stagePrincipal);
+                }
+                return;
+            }
 
+            // Movimiento jugador
+            if (e.getCode() == KeyCode.A) {
+                if (verPersonaje.getLayoutX() > -40) {
+                    verPersonaje.setLayoutX(verPersonaje.getLayoutX() - 10);
+                }
+            }
+            if (e.getCode() == KeyCode.D) {
+                if (verPersonaje.getLayoutX() < 976) {
+                    verPersonaje.setLayoutX(verPersonaje.getLayoutX() + 10);
+                }
+            }
+
+            // Ataque Q - Firewall (DDoS)
+            if (e.getCode() == KeyCode.Q) {
+                long ahora = System.nanoTime();
+                if (ahora - attack.getUltimoDisparo() < attack.getCooldown()) return;
+                attack.setUltimoDisparo(ahora);
+
+                ImageView verFirewall = attack.generarAtaque("file:media/Firewall.png", 220, 220, -20, -20, 
+                    raizJuego, verPersonaje, true);
+                
+                AnimationTimer moverFirewall = new AnimationTimer() {
+                    @Override
+                    public void handle(long now) {
+                        if (gameOver) { stop(); return; }
+                        attack.moverAtaque(verFirewall);
+
+                        if (verFirewall.getLayoutY() + verFirewall.getFitHeight() < 0) {
+                            raizJuego.getChildren().remove(verFirewall);
+                            stop();
+                            return;
+                        }
+
+                        if (tipoEnemigoActual[0] != null && tipoEnemigoActual[0].equals("DDoS") &&
+                            verFirewall.getBoundsInParent().intersects(enemigoActual[0].getBoundsInParent())) {
+
+                            raizJuego.getChildren().removeAll(verFirewall, enemigoActual[0]);
+                            tipoEnemigoActual[0] = enemy.generarTipoAleatorio();
+                            enemigoActual[0] = enemy.generarEnemigo(tipoEnemigoActual[0], raizJuego);
+                            enemigoActual[0].setLayoutY(-250);
+                            stop();
+                        }
+                    }
+                };
+                moverFirewall.start();
+            }
+
+            // Ataque W - Antivirus (Malware)
+            if (e.getCode() == KeyCode.W) {
+                long ahora = System.nanoTime();
+                if (ahora - attack.getUltimoDisparo() < attack.getCooldown()) return;
+                attack.setUltimoDisparo(ahora);
+
+                ImageView verAntivirus = attack.generarAtaque("file:media/Antivirus.png", 100, 130, 
+                    30, -20, raizJuego, verPersonaje, false);
+
+                AnimationTimer moverAntivirus = new AnimationTimer() {
+                    @Override
+                    public void handle(long now) {
+                        if (gameOver) { stop(); return; }
+                        attack.moverAtaque(verAntivirus);
+
+                        if (verAntivirus.getLayoutY() + verAntivirus.getFitHeight() < 0) {
+                            raizJuego.getChildren().remove(verAntivirus);
+                            stop();
+                            return;
+                        }
+
+                        if (tipoEnemigoActual[0] != null && tipoEnemigoActual[0].equals("Malware") &&
+                            verAntivirus.getBoundsInParent().intersects(enemigoActual[0].getBoundsInParent())) {
+
+                            raizJuego.getChildren().removeAll(verAntivirus, enemigoActual[0]);
+                            tipoEnemigoActual[0] = enemy.generarTipoAleatorio();
+                            enemigoActual[0] = enemy.generarEnemigo(tipoEnemigoActual[0], raizJuego);
+                            enemigoActual[0].setLayoutY(-250);
+                            stop();
+                        }
+                    }
+                };
+                moverAntivirus.start();
+            }
+
+            // Ataque E - Crypto Shield (Credential Attack)
+            if (e.getCode() == KeyCode.E) {
+                long ahora = System.nanoTime();
+                if (ahora - attack.getUltimoDisparo() < attack.getCooldown()) return;
+                attack.setUltimoDisparo(ahora);
+
+                ImageView verCryptoShield = attack.generarAtaque("file:media/Crypto Shield.png", 140, 140,
+                    30, -20, raizJuego, verPersonaje, true);
+
+                AnimationTimer moverCryptoShield = new AnimationTimer() {
+                    @Override
+                    public void handle(long now) {
+                        if (gameOver) { stop(); return; }
+                        attack.moverAtaque(verCryptoShield);
+
+                        if (verCryptoShield.getLayoutY() + verCryptoShield.getFitHeight() < 0) {
+                            raizJuego.getChildren().remove(verCryptoShield);
+                            stop();
+                            return;
+                        }
+
+                        if (tipoEnemigoActual[0] != null && tipoEnemigoActual[0].equals("Credential Attack") &&
+                            verCryptoShield.getBoundsInParent().intersects(enemigoActual[0].getBoundsInParent())) {
+
+                            raizJuego.getChildren().removeAll(verCryptoShield, enemigoActual[0]);
+                            tipoEnemigoActual[0] = enemy.generarTipoAleatorio();
+                            enemigoActual[0] = enemy.generarEnemigo(tipoEnemigoActual[0], raizJuego);
+                            enemigoActual[0].setLayoutY(-250);
+                            stop();
+                        }
+                    }
+                };
+                moverCryptoShield.start();
+            }
+        });
+
+        // Agregar todos los elementos visibles
+        raizJuego.getChildren().addAll(verMapaSeleccion, verPersonaje, labelTiempo, barraVida, labelVida);
+
+        // Iniciar los timers
+        moverEnemigoTimer.start();
+        timerGlobal.start();
+
+        return juego;
     }
 
+    private void actualizarBarraVida() {
+        double progreso = vidaActual / 100.0;
+        barraVida.setProgress(progreso);
+        labelVida.setText("Vida: " + (int) vidaActual + "%");
 
+        if (vidaActual > 50) barraVida.setStyle("-fx-accent: limegreen;");
+        else if (vidaActual > 25) barraVida.setStyle("-fx-accent: orange;");
+        else barraVida.setStyle("-fx-accent: red;");
 
-    //Genera el ataque "Crypto Shield"
-    if (e.getCode()== KeyCode.E) {
-
-        long ahora = System.nanoTime();
-        if (ahora - attack.getUltimoDisparo() < attack.getCooldown()){
-            return;
+        if (vidaActual <= 0 && !gameOver) {
+            gameOver = true;
+            labelGameOver.setVisible(true);
+            System.out.println("¡GAME OVER! Presiona ESPACIO para volver al menú");
         }
-        attack.setUltimoDisparo(ahora) ;
-
-
-        ImageView verCryptoShield = attack.generarAtaque("file:media/Crypto Shield.png", 140, 140,
-         30, -20, raizJuego, verPersonaje, true);
-
-         AnimationTimer moverCryptoShield = new AnimationTimer() {
-            @Override
-            public void handle(long now) {
-                attack.moverAtaque(verCryptoShield);
-
-                if (verCryptoShield.getLayoutY()+ verCryptoShield.getFitHeight() < 0){
-                    raizJuego.getChildren().remove(verCryptoShield);
-                    stop();
-                    return;
-                }
-
-                if (tipoEnemigoActual[0].equals("Credential Attack") && verCryptoShield.getBoundsInParent().intersects(enemigoActual[0].getBoundsInParent())){
-
-                    raizJuego.getChildren().removeAll(verCryptoShield, enemigoActual[0]);
-
-                    tipoEnemigoActual[0] = enemy.generarTipoAleatorio();
-                    enemigoActual[0] = enemy.generarEnemigo(tipoEnemigoActual[0], raizJuego);
-                    stop();
-                }
-            }   
-        };
-
-        moverCryptoShield.start();
-
-
     }
-    });
 
-
-    
-    
-    raizJuego.getChildren().add(verMapaSeleccion);
-    raizJuego.getChildren().add(verPersonaje);
-
-    moverEnemigo.start();
-    
-
-    return juego;  
-  }
-
+    private void volverAlMenu(Stage stagePrincipal) {
+        Platform.runLater(() -> {
+            try {
+                MainFX main = new MainFX();
+                main.start(stagePrincipal);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        });
+    }
 }
-
