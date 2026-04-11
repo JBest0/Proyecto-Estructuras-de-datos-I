@@ -1,8 +1,7 @@
 {
     "java.project.sourcePaths": ["src"],
     "java.project.referencedLibraries": [
-        "C:\\javafx-sdk-26\\lib\\**\\*.jar",
-        "lib/**/*.jar"
+        "C:\\javafx-sdk-26\\lib\\**\\*.jar"
     ],
     "java.jdt.ls.vmargs": "-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx1G -Xms100m --add-modules=ALL-SYSTEM",
     "java.compiler.codeLens.enabled": false,

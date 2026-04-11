@@ -6,6 +6,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import client.models.GameConfig;
 
 public class SeleccionFX {
 
@@ -17,7 +18,7 @@ public class SeleccionFX {
 
     int indiceSeleccion = 0;
 
-    public Scene crearPantalla(Stage inicio, Scene escenaAnterior, String username) {
+    public Scene crearPantalla(Stage inicio, Scene escenaAnterior, String username, GameConfig configPartida) {
 
         Group raizSeleccion = new Group();
         Scene escenario2 = new Scene(raizSeleccion,1136,944,Color.BEIGE);
@@ -90,7 +91,7 @@ public class SeleccionFX {
         continuar.setPrefSize(100, 40);
         continuar.setOnAction(e -> {
             MapSeleccionFX pantallaMapas = new MapSeleccionFX();
-            inicio.setScene(pantallaMapas.crearPantalla(inicio, escenario2, nombrePersonajes[indiceSeleccion], username));
+            inicio.setScene(pantallaMapas.crearPantalla(inicio, escenario2, nombrePersonajes[indiceSeleccion], username, configPartida));
         });
 
 

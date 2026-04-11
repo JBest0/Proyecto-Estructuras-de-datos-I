@@ -11,6 +11,7 @@ import javafx.scene.control.ProgressBar;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import client.models.GameConfig;
 
 public class GameScreenFX {
 
@@ -24,12 +25,26 @@ public class GameScreenFX {
     private ProgressBar barraVida;
     private Label labelVida;
     private Label labelGameOver;
+    private Label labelOponente;
+
+    private int scoreActual = 0;
+    private int nivelActual = 1;
+    private int scorePorKill = 10;
+    private int scorePasoNivel = 100;
+    private long ultimoSyncEstadoMs = 0;
+    private volatile boolean lecturaOponenteEnCurso = false;
 
     private AnimationTimer moverEnemigoTimer;
     private AnimationTimer timerGlobal;
     private boolean gameOver = false;
 
-    public Scene crearPantalla(Stage stagePrincipal, String mapa, String avatar, String username) {
+    public Scene crearPantalla(Stage stagePrincipal, String mapa, String avatar, String username, GameConfig configPartida) {
+
+        if (configPartida != null) {
+            vidaActual = configPartida.getInitialHp();
+            scorePorKill = configPartida.getScorePerKill();
+            scorePasoNivel = configPartida.getDifficultyStepScore();
+        }
 
         Pane raizJuego = new Pane();
         Scene juego = new Scene(raizJuego, 1136, 944);
@@ -75,6 +90,12 @@ public class GameScreenFX {
         labelJugador.setTextFill(Color.web("#00d084"));
         labelJugador.setLayoutX(20);
         labelJugador.setLayoutY(110);
+
+        labelOponente = new Label("Oponente - HP: -- | Score: --");
+        labelOponente.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+        labelOponente.setTextFill(Color.web("#7ec8ff"));
+        labelOponente.setLayoutX(20);
+        labelOponente.setLayoutY(140);
 
         // ====================== GAME OVER ======================
         labelGameOver = new Label("GAME OVER!");
@@ -147,6 +168,30 @@ public class GameScreenFX {
                 long segundos = segundosTotal % 60;
 
                 labelTiempo.setText(String.format("Tiempo: %d:%02d", minutos, segundos));
+
+                long ahoraMs = System.currentTimeMillis();
+                if (ahoraMs - ultimoSyncEstadoMs >= 1000) {
+                    ultimoSyncEstadoMs = ahoraMs;
+
+                    ServerConnection.sendEstado((int) vidaActual, scoreActual, nivelActual);
+
+                    if (!lecturaOponenteEnCurso) {
+                        lecturaOponenteEnCurso = true;
+                        new Thread(() -> {
+                            String estadoJson = ServerConnection.leerEstadoOponente();
+                            if (estadoJson != null && estadoJson.contains("\"type\":\"STATE\"")) {
+                                int hpOpp = extraerCampoEntero(estadoJson, "hp", -1);
+                                int scoreOpp = extraerCampoEntero(estadoJson, "score", -1);
+                                Platform.runLater(() -> {
+                                    if (hpOpp >= 0 && scoreOpp >= 0) {
+                                        labelOponente.setText("Oponente - HP: " + hpOpp + " | Score: " + scoreOpp);
+                                    }
+                                });
+                            }
+                            lecturaOponenteEnCurso = false;
+                        }).start();
+                    }
+                }
             }
         };
 
@@ -196,6 +241,7 @@ public class GameScreenFX {
                             verFirewall.getBoundsInParent().intersects(enemigoActual[0].getBoundsInParent())) {
 
                             raizJuego.getChildren().removeAll(verFirewall, enemigoActual[0]);
+                            registrarEliminacion();
                             tipoEnemigoActual[0] = enemy.generarTipoAleatorio();
                             enemigoActual[0] = enemy.generarEnemigo(tipoEnemigoActual[0], raizJuego);
                             enemigoActual[0].setLayoutY(-250);
@@ -231,6 +277,7 @@ public class GameScreenFX {
                             verAntivirus.getBoundsInParent().intersects(enemigoActual[0].getBoundsInParent())) {
 
                             raizJuego.getChildren().removeAll(verAntivirus, enemigoActual[0]);
+                            registrarEliminacion();
                             tipoEnemigoActual[0] = enemy.generarTipoAleatorio();
                             enemigoActual[0] = enemy.generarEnemigo(tipoEnemigoActual[0], raizJuego);
                             enemigoActual[0].setLayoutY(-250);
@@ -266,6 +313,7 @@ public class GameScreenFX {
                             verCryptoShield.getBoundsInParent().intersects(enemigoActual[0].getBoundsInParent())) {
 
                             raizJuego.getChildren().removeAll(verCryptoShield, enemigoActual[0]);
+                            registrarEliminacion();
                             tipoEnemigoActual[0] = enemy.generarTipoAleatorio();
                             enemigoActual[0] = enemy.generarEnemigo(tipoEnemigoActual[0], raizJuego);
                             enemigoActual[0].setLayoutY(-250);
@@ -278,7 +326,7 @@ public class GameScreenFX {
         });
 
         // Agregar todos los elementos visibles
-        raizJuego.getChildren().addAll(verMapaSeleccion, verPersonaje, labelTiempo, barraVida, labelVida, labelJugador);
+        raizJuego.getChildren().addAll(verMapaSeleccion, verPersonaje, labelTiempo, barraVida, labelVida, labelJugador, labelOponente);
 
         // Iniciar los timers
         moverEnemigoTimer.start();
@@ -312,5 +360,37 @@ public class GameScreenFX {
                 ex.printStackTrace();
             }
         });
+    }
+
+    private int extraerCampoEntero(String json, String campo, int valorDefecto) {
+        if (json == null) return valorDefecto;
+        String clave = "\"" + campo + "\":";
+        int inicio = json.indexOf(clave);
+        if (inicio == -1) return valorDefecto;
+        inicio += clave.length();
+
+        int fin = inicio;
+        while (fin < json.length()) {
+            char c = json.charAt(fin);
+            if ((c >= '0' && c <= '9') || c == '-') {
+                fin++;
+            } else {
+                break;
+            }
+        }
+
+        if (fin <= inicio) return valorDefecto;
+        try {
+            return Integer.parseInt(json.substring(inicio, fin));
+        } catch (NumberFormatException ex) {
+            return valorDefecto;
+        }
+    }
+
+    private void registrarEliminacion() {
+        scoreActual += scorePorKill;
+        if (scorePasoNivel > 0) {
+            nivelActual = 1 + (scoreActual / scorePasoNivel);
+        }
     }
 }

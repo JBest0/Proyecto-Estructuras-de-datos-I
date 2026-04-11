@@ -1,5 +1,6 @@
 import java.io.*;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -16,6 +17,8 @@ public class ServerConnection {
 
     /** Socket persistente reutilizado después de la autenticación */
     private static Socket socketActivo = null;
+    private static BufferedReader lectorActivo = null;
+    private static PrintWriter escritorActivo = null;
 
     private ServerConnection() {}
 
@@ -30,17 +33,9 @@ public class ServerConnection {
      * @param password contraseña en texto plano (se hashea aquí antes de enviar)
      * @return la línea JSON de respuesta del servidor
      */
-    public static String sendAuth(String tipo, String username, String password) {
+    public static synchronized String sendAuth(String tipo, String username, String password) {
         try {
-            // Abrir conexión si no existe aún
-            if (socketActivo == null || socketActivo.isClosed()) {
-                socketActivo = new Socket(HOST, PUERTO);
-            }
-
-            PrintWriter escritor = new PrintWriter(
-                new OutputStreamWriter(socketActivo.getOutputStream(), StandardCharsets.UTF_8), true);
-            BufferedReader lector = new BufferedReader(
-                new InputStreamReader(socketActivo.getInputStream(), StandardCharsets.UTF_8));
+            asegurarConexionActiva();
 
             // Hashear la contraseña en el cliente antes de enviar
             String passwordHash = hashSHA256(password);
@@ -50,10 +45,10 @@ public class ServerConnection {
                 + "\"username\":\"" + escaparJson(username) + "\","
                 + "\"password\":\"" + passwordHash + "\"}";
 
-            escritor.println(solicitud);
+            escritorActivo.println(solicitud);
 
             // Leer respuesta del servidor
-            String respuesta = lector.readLine();
+            String respuesta = lectorActivo.readLine();
             if (respuesta == null) {
                 return "{\"type\":\"AUTH_FAIL\",\"reason\":\"El servidor cerró la conexión\"}";
             }
@@ -66,6 +61,67 @@ public class ServerConnection {
         }
     }
 
+    /**
+     * Espera la línea CONFIG enviada por el servidor tras AUTH_OK.
+     *
+     * @return JSON de configuración o null si no fue posible leerlo.
+     */
+    public static synchronized String esperarConfig() {
+        try {
+            if (socketActivo == null || socketActivo.isClosed() || lectorActivo == null) {
+                return null;
+            }
+            return lectorActivo.readLine();
+        } catch (IOException ex) {
+            cerrarSocket();
+            return null;
+        }
+    }
+
+    /**
+     * Envía el estado local del jugador por el socket ya autenticado.
+     */
+    public static synchronized void sendEstado(int hp, int score, int nivel) {
+        try {
+            if (socketActivo == null || socketActivo.isClosed()) {
+                return;
+            }
+            asegurarConexionActiva();
+            String json = "{\"type\":\"STATE\",\"hp\":" + hp
+                + ",\"score\":" + score
+                + ",\"nivel\":" + nivel + "}";
+            escritorActivo.println(json);
+        } catch (IOException ex) {
+            cerrarSocket();
+        }
+    }
+
+    /**
+     * Intenta leer una línea del socket sin bloquear de forma prolongada.
+     *
+     * @return JSON recibido o null si no hubo datos en el timeout corto.
+     */
+    public static synchronized String leerEstadoOponente() {
+        if (socketActivo == null || socketActivo.isClosed() || lectorActivo == null) {
+            return null;
+        }
+
+        try {
+            int timeoutAnterior = socketActivo.getSoTimeout();
+            socketActivo.setSoTimeout(50);
+            try {
+                return lectorActivo.readLine();
+            } finally {
+                socketActivo.setSoTimeout(timeoutAnterior);
+            }
+        } catch (SocketTimeoutException ex) {
+            return null;
+        } catch (IOException ex) {
+            cerrarSocket();
+            return null;
+        }
+    }
+
     // ----------------------------------------------------------------
     //  Helpers
     // ----------------------------------------------------------------
@@ -74,7 +130,23 @@ public class ServerConnection {
     public static void cerrarSocket() {
         if (socketActivo != null) {
             try { socketActivo.close(); } catch (IOException ignored) {}
-            socketActivo = null;
+        }
+        socketActivo = null;
+        lectorActivo = null;
+        escritorActivo = null;
+    }
+
+    private static void asegurarConexionActiva() throws IOException {
+        if (socketActivo == null || socketActivo.isClosed()) {
+            socketActivo = new Socket(HOST, PUERTO);
+        }
+        if (escritorActivo == null) {
+            escritorActivo = new PrintWriter(
+                new OutputStreamWriter(socketActivo.getOutputStream(), StandardCharsets.UTF_8), true);
+        }
+        if (lectorActivo == null) {
+            lectorActivo = new BufferedReader(
+                new InputStreamReader(socketActivo.getInputStream(), StandardCharsets.UTF_8));
         }
     }
 

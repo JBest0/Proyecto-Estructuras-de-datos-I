@@ -7,12 +7,13 @@ import javafx.scene.image.ImageView;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
+import client.models.GameConfig;
 
 public class MapSeleccionFX {
 
     private String mapaSeleccionado;
 
-    public Scene crearPantalla(Stage inicio, Scene escenaAnterior, String avatarSeleccionado, String username) {
+    public Scene crearPantalla(Stage inicio, Scene escenaAnterior, String avatarSeleccionado, String username, GameConfig configPartida) {
         Group raiz = new Group();
         Scene escena = new Scene(raiz, 1136, 944, Color.BEIGE);
 
@@ -111,7 +112,7 @@ public class MapSeleccionFX {
         GameScreenFX pantallaJuego = new GameScreenFX();
 
         confirmar.setOnAction(e -> {
-            inicio.setScene(pantallaJuego.crearPantalla(inicio, mapaSeleccionado, avatarSeleccionado, username));
+            inicio.setScene(pantallaJuego.crearPantalla(inicio, mapaSeleccionado, avatarSeleccionado, username, configPartida));
         });
 
         raiz.getChildren().add(titulo);

@@ -11,6 +11,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
+import client.models.GameConfig;
 
 /**
  * Pantalla de inicio de sesión / registro.
@@ -120,8 +121,9 @@ public class LoginFX {
         botonTest.setOnAction(e -> {
             String usuario = campoUsuario.getText().trim();
             if (usuario.isEmpty()) usuario = "Jugador";
+            GameConfig configPorDefecto = crearConfigPorDefecto();
             SeleccionFX pantallaSeleccion = new SeleccionFX();
-            inicio.setScene(pantallaSeleccion.crearPantalla(inicio, escena, usuario));
+            inicio.setScene(pantallaSeleccion.crearPantalla(inicio, escena, usuario, configPorDefecto));
         });
 
         // ====================== BOTÓN VOLVER ======================
@@ -148,10 +150,16 @@ public class LoginFX {
 
             new Thread(() -> {
                 String respuesta = ServerConnection.sendAuth("LOGIN", usuario, contrasena);
+                GameConfig config = null;
+                if (respuesta != null && respuesta.contains("\"AUTH_OK\"")) {
+                    String jsonConfig = ServerConnection.esperarConfig();
+                    config = parsearConfig(jsonConfig);
+                }
+                GameConfig configFinal = config;
                 Platform.runLater(() -> {
                     botonLogin.setDisable(false);
                     botonRegistro.setDisable(false);
-                    procesarRespuesta(respuesta, usuario, inicio, escena, labelError);
+                    procesarRespuesta(respuesta, configFinal, usuario, inicio, escena, labelError);
                 });
             }).start();
         });
@@ -173,10 +181,16 @@ public class LoginFX {
 
             new Thread(() -> {
                 String respuesta = ServerConnection.sendAuth("REGISTER", usuario, contrasena);
+                GameConfig config = null;
+                if (respuesta != null && respuesta.contains("\"AUTH_OK\"")) {
+                    String jsonConfig = ServerConnection.esperarConfig();
+                    config = parsearConfig(jsonConfig);
+                }
+                GameConfig configFinal = config;
                 Platform.runLater(() -> {
                     botonLogin.setDisable(false);
                     botonRegistro.setDisable(false);
-                    procesarRespuesta(respuesta, usuario, inicio, escena, labelError);
+                    procesarRespuesta(respuesta, configFinal, usuario, inicio, escena, labelError);
                 });
             }).start();
         });
@@ -202,7 +216,7 @@ public class LoginFX {
     // ----------------------------------------------------------------
     //  Procesa la respuesta JSON del servidor (parsing manual simple)
     // ----------------------------------------------------------------
-    private void procesarRespuesta(String jsonRespuesta, String username,
+    private void procesarRespuesta(String jsonRespuesta, GameConfig config, String username,
                                    Stage inicio, Scene escenaActual, Label labelError) {
         if (jsonRespuesta == null) {
             labelError.setText("Error: respuesta nula del servidor.");
@@ -211,9 +225,15 @@ public class LoginFX {
         }
 
         if (jsonRespuesta.contains("\"AUTH_OK\"")) {
+            if (config == null) {
+                labelError.setText("Autenticado, pero no se recibió CONFIG del servidor.");
+                labelError.setTextFill(Color.web("#ff6b6b"));
+                ServerConnection.cerrarSocket();
+                return;
+            }
             // Transición a la pantalla de selección de personaje
             SeleccionFX pantallaSeleccion = new SeleccionFX();
-            inicio.setScene(pantallaSeleccion.crearPantalla(inicio, escenaActual, username));
+            inicio.setScene(pantallaSeleccion.crearPantalla(inicio, escenaActual, username, config));
 
         } else {
             // Extraer el campo "reason" del JSON de forma simple
@@ -239,5 +259,112 @@ public class LoginFX {
         int fin = json.indexOf("\"", inicio);
         if (fin == -1) return null;
         return json.substring(inicio, fin);
+    }
+
+    private GameConfig parsearConfig(String json) {
+        if (json == null || !json.contains("\"type\":\"CONFIG\"")) {
+            return null;
+        }
+
+        int hp = extraerCampoEntero(json, "initialHp", 100);
+        double spawnRate = extraerCampoDecimal(json, "baseSpawnRate", 1.0);
+        double attackSpeed = extraerCampoDecimal(json, "baseAttackSpeed", 2.0);
+        int scorePerKill = extraerCampoEntero(json, "scorePerKill", 10);
+        int difficultyStepScore = extraerCampoEntero(json, "difficultyStepScore", 100);
+        double spawnMultiplierPerLevel = extraerCampoDecimal(json, "spawnMultiplierPerLevel", 1.15);
+        double speedAddPerLevel = extraerCampoDecimal(json, "speedAddPerLevel", 0.3);
+
+        String bloqueDamage = extraerObjeto(json, "damageByType");
+        int ddosDamage = extraerCampoEntero(bloqueDamage, "DDOS", 5);
+        int malwareDamage = extraerCampoEntero(bloqueDamage, "MALWARE", 8);
+        int credDamage = extraerCampoEntero(bloqueDamage, "CRED", 10);
+
+        return new GameConfig(
+            hp,
+            spawnRate,
+            attackSpeed,
+            scorePerKill,
+            difficultyStepScore,
+            spawnMultiplierPerLevel,
+            speedAddPerLevel,
+            ddosDamage,
+            malwareDamage,
+            credDamage
+        );
+    }
+
+    private int extraerCampoEntero(String json, String campo, int valorDefecto) {
+        if (json == null) return valorDefecto;
+        String clave = "\"" + campo + "\":";
+        int inicio = json.indexOf(clave);
+        if (inicio == -1) return valorDefecto;
+        inicio += clave.length();
+
+        int fin = inicio;
+        while (fin < json.length()) {
+            char c = json.charAt(fin);
+            if ((c >= '0' && c <= '9') || c == '-') {
+                fin++;
+            } else {
+                break;
+            }
+        }
+
+        if (fin <= inicio) return valorDefecto;
+        try {
+            return Integer.parseInt(json.substring(inicio, fin));
+        } catch (NumberFormatException ex) {
+            return valorDefecto;
+        }
+    }
+
+    private double extraerCampoDecimal(String json, String campo, double valorDefecto) {
+        if (json == null) return valorDefecto;
+        String clave = "\"" + campo + "\":";
+        int inicio = json.indexOf(clave);
+        if (inicio == -1) return valorDefecto;
+        inicio += clave.length();
+
+        int fin = inicio;
+        while (fin < json.length()) {
+            char c = json.charAt(fin);
+            if ((c >= '0' && c <= '9') || c == '-' || c == '.') {
+                fin++;
+            } else {
+                break;
+            }
+        }
+
+        if (fin <= inicio) return valorDefecto;
+        try {
+            return Double.parseDouble(json.substring(inicio, fin));
+        } catch (NumberFormatException ex) {
+            return valorDefecto;
+        }
+    }
+
+    private String extraerObjeto(String json, String campo) {
+        if (json == null) return null;
+        String clave = "\"" + campo + "\":{";
+        int inicio = json.indexOf(clave);
+        if (inicio == -1) return null;
+        inicio += ("\"" + campo + "\":").length();
+
+        int profundidad = 0;
+        for (int i = inicio; i < json.length(); i++) {
+            char c = json.charAt(i);
+            if (c == '{') profundidad++;
+            if (c == '}') {
+                profundidad--;
+                if (profundidad == 0) {
+                    return json.substring(inicio, i + 1);
+                }
+            }
+        }
+        return null;
+    }
+
+    private GameConfig crearConfigPorDefecto() {
+        return new GameConfig(100, 1.0, 2.0, 10, 100, 1.15, 0.3, 5, 8, 10);
     }
 }
