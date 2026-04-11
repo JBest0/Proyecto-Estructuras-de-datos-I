@@ -42,7 +42,7 @@ public class Enemigos {
         ImageView verEnemigo = new ImageView(enemigo);
 
 
-    
+
         verEnemigo.setLayoutX(Math.random()*936);
         verEnemigo.setLayoutY(0);
         verEnemigo.setFitHeight(200);

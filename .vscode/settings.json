@@ -1,7 +1,17 @@
 {
     "java.project.sourcePaths": ["src"],
     "java.project.referencedLibraries": [
-        "C:\\javafx-sdk-26\\lib\\**\\*.jar"
+        "libs/javafx-swt.jar",
+        "libs/javafx.base.jar",
+        "libs/javafx.controls.jar",
+        "libs/javafx.fxml.jar",
+        "libs/javafx.graphics.jar",
+        "libs/javafx.media.jar",
+        "libs/javafx.swing.jar",
+        "libs/javafx.web.jar",
+        "libs/jdk.jsobject.jar",
+        "libs/jfx.incubator.input.jar",
+        "libs/jfx.incubator.richtext.jar"
     ],
     "java.jdt.ls.vmargs": "-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx1G -Xms100m --add-modules=ALL-SYSTEM",
     "java.compiler.codeLens.enabled": false,

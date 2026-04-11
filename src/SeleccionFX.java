@@ -29,11 +29,9 @@ public class SeleccionFX {
         verSprites.setLayoutX(420);
         verSprites.setLayoutY(310);
 
-
         //Imagen fondo
         Image fondo = new Image("file:media/Fondo Seleccion.png");
         ImageView verfondo = new ImageView(fondo);
-
 
         //TEXTO de arriba
         Label texto = new Label("Selecciona a tu personaje");
