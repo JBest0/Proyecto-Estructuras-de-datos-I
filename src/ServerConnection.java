@@ -96,6 +96,17 @@ public class ServerConnection {
         }
     }
 
+    public static synchronized void sendGameOver(int score, int nivel) {
+        try {
+            if (socketActivo == null || socketActivo.isClosed()) return;
+            asegurarConexionActiva();
+            String json = "{\"type\":\"GAME_OVER\",\"score\":" + score + ",\"nivel\":" + nivel + "}";
+            escritorActivo.println(json);
+        } catch (IOException ex) {
+            cerrarSocket();
+        }
+    }
+
     /**
      * Intenta leer una línea del socket sin bloquear de forma prolongada.
      *

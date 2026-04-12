@@ -26,6 +26,18 @@ public class GameScreenFX {
     private Label labelVida;
     private Label labelGameOver;
     private Label labelOponente;
+    private Label labelScore;
+    private Label labelNivel;
+
+    private int danosDDoS;
+    private int danosMalware;
+    private int danosCredential;
+
+    private double baseAttackSpeed;
+    private double spawnMultiplier;
+    private double speedAddPerLevel;
+    private long ultimoSpawn = 0;
+    private double spawnIntervalMs = 1000.0;
 
     private int scoreActual = 0;
     private int nivelActual = 1;
@@ -44,6 +56,24 @@ public class GameScreenFX {
             vidaActual = configPartida.getInitialHp();
             scorePorKill = configPartida.getScorePerKill();
             scorePasoNivel = configPartida.getDifficultyStepScore();
+        }
+
+        if (configPartida != null) {
+            danosDDoS = configPartida.getDamageFor(client.models.AttackType.DDOS);
+            danosMalware = configPartida.getDamageFor(client.models.AttackType.MALWARE);
+            danosCredential = configPartida.getDamageFor(client.models.AttackType.CREDENTIAL_ATTACK);
+            baseAttackSpeed = configPartida.getBaseAttackSpeed();
+            spawnMultiplier = configPartida.getSpawnMultiplierPerLevel();
+            speedAddPerLevel = configPartida.getSpeedAddPerLevel();
+            spawnIntervalMs = 1000.0 / configPartida.getBaseSpawnRate();
+        } else {
+            danosDDoS = 5;
+            danosMalware = 8;
+            danosCredential = 10;
+            baseAttackSpeed = 2.0;
+            spawnMultiplier = 1.15;
+            speedAddPerLevel = 0.3;
+            spawnIntervalMs = 1000.0;
         }
 
         Pane raizJuego = new Pane();
@@ -97,6 +127,18 @@ public class GameScreenFX {
         labelOponente.setLayoutX(20);
         labelOponente.setLayoutY(140);
 
+        labelScore = new Label("Score: " + scoreActual);
+        labelScore.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+        labelScore.setTextFill(Color.WHITE);
+        labelScore.setLayoutX(20);
+        labelScore.setLayoutY(165);
+
+        labelNivel = new Label("Nivel: " + nivelActual);
+        labelNivel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+        labelNivel.setTextFill(Color.WHITE);
+        labelNivel.setLayoutX(20);
+        labelNivel.setLayoutY(190);
+
         // ====================== GAME OVER ======================
         labelGameOver = new Label("GAME OVER!");
         labelGameOver.setFont(Font.font("Arial", FontWeight.BOLD, 72));  // más grande y bold
@@ -119,16 +161,21 @@ public class GameScreenFX {
                 if (gameOver) return;
 
                 // === PRIMERA VEZ: Crear el primer enemigo ===
-                if (enemigoActual[0] == null) {
+                double intervaloActual = spawnIntervalMs / Math.pow(spawnMultiplier, nivelActual - 1);
+                long ahora = System.currentTimeMillis();
+                if (enemigoActual[0] == null && (ahora - ultimoSpawn) >= intervaloActual) {
+                    ultimoSpawn = ahora;
                     tipoEnemigoActual[0] = enemy.generarTipoAleatorio();
                     enemigoActual[0] = enemy.generarEnemigo(tipoEnemigoActual[0], raizJuego);
                     enemigoActual[0].setLayoutY(-280);   // Aparece bien arriba
                     primerCiclo = true;
                     return;
                 }
+                if (enemigoActual[0] == null) return;
 
                 // Mover enemigo hacia abajo
-                enemigoActual[0].setLayoutY(enemigoActual[0].getLayoutY() + 2);
+                double velocidadActual = baseAttackSpeed + (speedAddPerLevel * (nivelActual - 1));
+                enemigoActual[0].setLayoutY(enemigoActual[0].getLayoutY() + velocidadActual);
 
                 // Saltar verificación en el primer ciclo después de spawnear
                 if (primerCiclo) {
@@ -142,16 +189,13 @@ public class GameScreenFX {
                     raizJuego.getChildren().remove(enemigoActual[0]);
 
                     // Bajar vida
-                    vidaActual -= 60;
+                    if (tipoEnemigoActual[0].equals("DDoS"))             vidaActual -= danosDDoS;
+                    else if (tipoEnemigoActual[0].equals("Malware"))      vidaActual -= danosMalware;
+                    else                                                   vidaActual -= danosCredential;
                     if (vidaActual < 0) vidaActual = 0;
                     actualizarBarraVida();
 
-                    // Crear nuevo enemigo
-                    tipoEnemigoActual[0] = enemy.generarTipoAleatorio();
-                    enemigoActual[0] = enemy.generarEnemigo(tipoEnemigoActual[0], raizJuego);
-                    enemigoActual[0].setLayoutY(-280);
-
-                    primerCiclo = true;   // Reset para el siguiente
+                    enemigoActual[0] = null;
                 }
             }
         };
@@ -205,12 +249,12 @@ public class GameScreenFX {
             }
 
             // Movimiento jugador
-            if (e.getCode() == KeyCode.A) {
+            if (e.getCode() == KeyCode.LEFT) {
                 if (verPersonaje.getLayoutX() > -40) {
                     verPersonaje.setLayoutX(verPersonaje.getLayoutX() - 10);
                 }
             }
-            if (e.getCode() == KeyCode.D) {
+            if (e.getCode() == KeyCode.RIGHT) {
                 if (verPersonaje.getLayoutX() < 976) {
                     verPersonaje.setLayoutX(verPersonaje.getLayoutX() + 10);
                 }
@@ -326,7 +370,7 @@ public class GameScreenFX {
         });
 
         // Agregar todos los elementos visibles
-        raizJuego.getChildren().addAll(verMapaSeleccion, verPersonaje, labelTiempo, barraVida, labelVida, labelJugador, labelOponente);
+        raizJuego.getChildren().addAll(verMapaSeleccion, verPersonaje, labelTiempo, barraVida, labelVida, labelJugador, labelOponente, labelScore, labelNivel);
 
         // Iniciar los timers
         moverEnemigoTimer.start();
@@ -346,6 +390,12 @@ public class GameScreenFX {
 
         if (vidaActual <= 0 && !gameOver) {
             gameOver = true;
+            ServerConnection.sendEstado(0, scoreActual, nivelActual);
+            new Thread(() -> {
+                String gameOverMsg = "{\"type\":\"GAME_OVER\",\"score\":" + scoreActual + ",\"nivel\":" + nivelActual + "}";
+                // reuse the existing sendEstado channel — call a new method
+                ServerConnection.sendGameOver(scoreActual, nivelActual);
+            }).start();
             labelGameOver.setVisible(true);
             System.out.println("¡GAME OVER! Presiona ESPACIO para volver al menú");
         }
@@ -392,5 +442,9 @@ public class GameScreenFX {
         if (scorePasoNivel > 0) {
             nivelActual = 1 + (scoreActual / scorePasoNivel);
         }
+        Platform.runLater(() -> {
+            labelScore.setText("Score: " + scoreActual);
+            labelNivel.setText("Nivel: " + nivelActual);
+        });
     }
 }
