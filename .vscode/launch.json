@@ -2,6 +2,27 @@
     "configurations": [
         {
             "type": "java",
+            "name": "Launcher",
+            "request": "launch",
+            "mainClass": "Launcher",
+            "projectName": "Proyecto-Estructuras-de-datos-I_aeca44ff"
+        },
+        {
+            "type": "java",
+            "name": "Launcher",
+            "request": "launch",
+            "mainClass": "client.Launcher",
+            "projectName": "Proyecto-Estructuras-de-datos-I_aeca44ff"
+        },
+        {
+            "type": "java",
+            "name": "MainFX",
+            "request": "launch",
+            "mainClass": "MainFX",
+            "projectName": "Proyecto-Estructuras-de-datos-I_aeca44ff"
+        },
+        {
+            "type": "java",
             "name": "Launch JavaFX App",
             "request": "launch",
             "mainClass": "tu.paquete.Main",

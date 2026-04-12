@@ -1,0 +1,273 @@
+package serverside.estructuras;
+
+import java.util.Iterator;
+
+/**
+ * Lista simplemente enlazada genÃ©rica implementada manualmente.
+ *
+ * @param <T> tipo de dato a almacenar.
+ */
+public class LinkedList<T> {
+
+    /** Primer nodo de la lista. */
+    private Node<T> head;
+
+    /** Cantidad actual de elementos. */
+    private int size;
+
+    /**
+     * Nodo interno de la lista.
+     *
+     * @param <T> tipo de dato almacenado.
+     */
+    private static final class Node<T> {
+        private T data;
+        private Node<T> next;
+
+        private Node(T data) {
+            this.data = data;
+            this.next = null;
+        }
+    }
+
+    /**
+     * Crea una lista vacÃ­a.
+     */
+    public LinkedList() {
+        this.head = null;
+        this.size = 0;
+    }
+
+    /**
+     * Agrega un elemento al inicio de la lista.
+     *
+     * @param elemento elemento a insertar.
+     */
+    public void add(T elemento) {
+        Node<T> newNode = new Node<>(elemento);
+        newNode.next = head;
+        head = newNode;
+        size++;
+    }
+
+    /**
+     * Remueve y retorna el elemento en el Ã­ndice indicado.
+     *
+     * @param index Ã­ndice objetivo (base 0).
+     * @return elemento removido.
+     * @throws IndexOutOfBoundsException si el Ã­ndice es invÃ¡lido.
+     */
+    public T remove(int index) {
+        validateIndex(index);
+
+        if (index == 0) {
+            T removedValue = head.data;
+            Node<T> oldHead = head;
+            head = head.next;
+            oldHead.next = null;
+            oldHead.data = null;
+            size--;
+            return removedValue;
+        }
+
+        Node<T> previous = getNodeAt(index - 1);
+        Node<T> target = previous.next;
+        T removedValue = target.data;
+
+        previous.next = target.next;
+        target.next = null;
+        target.data = null;
+        size--;
+
+        return removedValue;
+    }
+
+    /**
+     * Retorna el elemento en un Ã­ndice especÃ­fico.
+     *
+     * @param index Ã­ndice objetivo (base 0).
+     * @return elemento en ese Ã­ndice.
+     * @throws IndexOutOfBoundsException si el Ã­ndice es invÃ¡lido.
+     */
+    public T get(int index) {
+        validateIndex(index);
+        return getNodeAt(index).data;
+    }
+
+    /**
+     * Retorna la cantidad de elementos en la lista.
+     *
+     * @return tamaÃ±o actual.
+     */
+    public int size() {
+        return size;
+    }
+
+    /**
+     * Indica si la lista estÃ¡ vacÃ­a.
+     *
+     * @return true si no tiene elementos.
+     */
+    public boolean isEmpty() {
+        return size == 0;
+    }
+
+    /**
+     * Crea un iterador para recorrer la lista desde el inicio.
+     *
+     * @return iterador de la lista.
+     */
+    public Iterator<T> iterator() {
+        return new LinkedListIterator();
+    }
+
+    /**
+     * Elimina todos los elementos de la lista.
+     */
+    public void clear() {
+        Node<T> current = head;
+        while (current != null) {
+            Node<T> next = current.next;
+            current.data = null;
+            current.next = null;
+            current = next;
+        }
+
+        head = null;
+        size = 0;
+    }
+
+    /**
+     * Retorna el Ã­ndice de la primera ocurrencia del elemento.
+     *
+     * @param elemento elemento a buscar.
+     * @return Ã­ndice encontrado o -1 si no existe.
+     */
+    public int indexOf(T elemento) {
+        Node<T> current = head;
+        int index = 0;
+
+        while (current != null) {
+            if (areEqual(current.data, elemento)) {
+                return index;
+            }
+            current = current.next;
+            index++;
+        }
+
+        return -1;
+    }
+
+    /**
+     * Indica si el elemento existe en la lista.
+     *
+     * @param elemento elemento a verificar.
+     * @return true si existe.
+     */
+    public boolean contains(T elemento) {
+        return indexOf(elemento) != -1;
+    }
+
+    /**
+     * Remueve el primer elemento de la lista.
+     *
+     * @throws IndexOutOfBoundsException si la lista estÃ¡ vacÃ­a.
+     */
+    public void removeFirst() {
+        remove(0);
+    }
+
+    /**
+     * Retorna el primer elemento de la lista.
+     *
+     * @return primer elemento.
+     * @throws IndexOutOfBoundsException si la lista estÃ¡ vacÃ­a.
+     */
+    public T getFirst() {
+        return get(0);
+    }
+
+    /**
+     * Remueve y retorna el Ãºltimo elemento de la lista.
+     *
+     * @return Ãºltimo elemento removido.
+     * @throws IndexOutOfBoundsException si la lista estÃ¡ vacÃ­a.
+     */
+    public T removeLast() {
+        return remove(size - 1);
+    }
+
+    /**
+     * Iterador de LinkedList implementado manualmente.
+     */
+    private final class LinkedListIterator implements Iterator<T> {
+
+        private Node<T> currentNode;
+
+        private LinkedListIterator() {
+            this.currentNode = head;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return currentNode != null;
+        }
+
+        @Override
+        public T next() {
+            if (currentNode == null) {
+                throw new IllegalStateException("No hay mas elementos en la lista");
+            }
+
+            T value = currentNode.data;
+            currentNode = currentNode.next;
+            return value;
+        }
+    }
+
+    /**
+     * Valida que un Ã­ndice estÃ© dentro del rango permitido.
+     *
+     * @param index Ã­ndice a validar.
+     */
+    private void validateIndex(int index) {
+        if (index < 0 || index >= size) {
+            throw new IndexOutOfBoundsException(
+                "Indice fuera de rango: " + index + ", size: " + size
+            );
+        }
+    }
+
+    /**
+     * Obtiene el nodo en un Ã­ndice especÃ­fico.
+     *
+     * @param index Ã­ndice objetivo.
+     * @return nodo en ese Ã­ndice.
+     */
+    private Node<T> getNodeAt(int index) {
+        Node<T> current = head;
+        int currentIndex = 0;
+
+        while (currentIndex < index) {
+            current = current.next;
+            currentIndex++;
+        }
+
+        return current;
+    }
+
+    /**
+     * Compara dos referencias considerando valores nulos.
+     *
+     * @param first primer valor.
+     * @param second segundo valor.
+     * @return true si son equivalentes.
+     */
+    private boolean areEqual(T first, T second) {
+        if (first == null) {
+            return second == null;
+        }
+        return first.equals(second);
+    }
+}
+

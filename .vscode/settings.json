@@ -1,17 +1,19 @@
 {
-    "java.project.sourcePaths": ["src"],
+    "java.project.sourcePaths": [
+        "src"
+    ],
     "java.project.referencedLibraries": [
-        "libs/javafx-swt.jar",
-        "libs/javafx.base.jar",
-        "libs/javafx.controls.jar",
-        "libs/javafx.fxml.jar",
-        "libs/javafx.graphics.jar",
-        "libs/javafx.media.jar",
-        "libs/javafx.swing.jar",
-        "libs/javafx.web.jar",
-        "libs/jdk.jsobject.jar",
-        "libs/jfx.incubator.input.jar",
-        "libs/jfx.incubator.richtext.jar"
+        "/home/ianguz/Documentos/Proyecto-Estructuras-de-datos-I/libs/javafx.fxml.jar",
+        "/home/ianguz/Documentos/Proyecto-Estructuras-de-datos-I/libs/javafx.media.jar",
+        "/home/ianguz/Documentos/Proyecto-Estructuras-de-datos-I/libs/javafx-swt.jar",
+        "/home/ianguz/Documentos/Proyecto-Estructuras-de-datos-I/libs/javafx.web.jar",
+        "/home/ianguz/Documentos/Proyecto-Estructuras-de-datos-I/libs/javafx.swing.jar",
+        "/home/ianguz/Documentos/Proyecto-Estructuras-de-datos-I/libs/jfx.incubator.richtext.jar",
+        "/home/ianguz/Documentos/Proyecto-Estructuras-de-datos-I/libs/jfx.incubator.input.jar",
+        "/home/ianguz/Documentos/Proyecto-Estructuras-de-datos-I/libs/javafx.graphics.jar",
+        "/home/ianguz/Documentos/Proyecto-Estructuras-de-datos-I/libs/jdk.jsobject.jar",
+        "/home/ianguz/Documentos/Proyecto-Estructuras-de-datos-I/libs/javafx.base.jar",
+        "/home/ianguz/Documentos/Proyecto-Estructuras-de-datos-I/libs/javafx.controls.jar"
     ],
     "java.jdt.ls.vmargs": "-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx1G -Xms100m --add-modules=ALL-SYSTEM",
     "java.compiler.codeLens.enabled": false,
