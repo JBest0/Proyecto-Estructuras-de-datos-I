@@ -50,9 +50,7 @@ public class ServerConnection {
         }
     }
 
-    // ----------------------------------------------------------------
-    //  Envío y lectura para el Game Loop
-    // ----------------------------------------------------------------
+    //  Envío y lectura para el bucle
     public static void enviarEstado(String jsonEstado) {
         try {
             if (escritorActivo != null) {
@@ -64,10 +62,6 @@ public class ServerConnection {
         }
     }
 
-    /**
-     * Lee un mensaje de forma síncrona (se queda esperando).
-     * Ideal para esperar la configuración inicial o emparejamiento.
-     */
     public static String leerMensaje() {
         try {
             if (lectorActivo != null) {
@@ -83,10 +77,6 @@ public class ServerConnection {
         return null;
     }
 
-    /**
-     * Lee un mensaje solo si hay datos disponibles.
-     * Ideal para no bloquear el AnimationTimer de JavaFX.
-     */
     public static String leerMensajeAsync() {
         try {
             if (lectorActivo != null && lectorActivo.available() > 0) {
@@ -98,9 +88,7 @@ public class ServerConnection {
         return null;
     }
 
-    // ----------------------------------------------------------------
     //  Métodos Internos
-    // ----------------------------------------------------------------
     private static synchronized void asegurarConexionActiva() throws IOException {
         if (socketActivo == null || socketActivo.isClosed()) {
             socketActivo = new Socket(HOST, PUERTO);

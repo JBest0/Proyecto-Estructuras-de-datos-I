@@ -1,10 +1,4 @@
 package client.models;
-
-/**
- * Configuración base de una partida.
- * Se quitaron los modificadores 'final' para permitir que el LoginFX 
- * actualice los valores con lo que mande el servidor.
- */
 public class GameConfig {
 
     private int initialHp;
@@ -18,10 +12,7 @@ public class GameConfig {
     private int malwareDamage;
     private int credentialDamage;
 
-    /**
-     * CONSTRUCTOR VACÍO (Necesario para el LoginFX)
-     * Inicializa con valores seguros por si el servidor falla.
-     */
+    // constructor vacio para LoginFX
     public GameConfig() {
         this.initialHp = 100;
         this.baseSpawnRate = 2000;
@@ -35,9 +26,7 @@ public class GameConfig {
         this.credentialDamage = 20;
     }
 
-    /**
-     * Constructor completo (se mantiene por compatibilidad)
-     */
+    //constructor
     public GameConfig(
         int hp,
         double spawnRate,
@@ -62,7 +51,7 @@ public class GameConfig {
         this.credentialDamage = credentialDamage;
     }
 
-    // ====================== GETTERS ======================
+    // getters
     public int getInitialHp() { return initialHp; }
     public double getBaseSpawnRate() { return baseSpawnRate; }
     public double getBaseAttackSpeed() { return baseAttackSpeed; }
@@ -71,16 +60,14 @@ public class GameConfig {
     public double getSpawnMultiplierPerLevel() { return spawnMultiplierPerLevel; }
     public double getSpeedAddPerLevel() { return speedAddPerLevel; }
 
-    /**
-     * Retorna el daño asociado a un tipo de ataque.
-     */
+    //Retorna el daño asociado a un tipo de ataque.
     public int getDamageFor(AttackType tipo) {
         if (tipo == AttackType.DDOS) return ddosDamage;
         if (tipo == AttackType.MALWARE) return malwareDamage;
         return credentialDamage;
     }
 
-    // ====================== SETTERS (NUEVOS) ======================
+    // setters
     public void setInitialHp(int hp) { this.initialHp = hp; }
     public void setBaseSpawnRate(double rate) { this.baseSpawnRate = rate; }
     public void setBaseAttackSpeed(double speed) { this.baseAttackSpeed = speed; }
