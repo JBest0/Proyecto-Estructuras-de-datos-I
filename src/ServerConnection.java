@@ -1,4 +1,6 @@
-import java.io.*;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.net.Socket;
 
 /**
@@ -8,7 +10,7 @@ import java.net.Socket;
  */
 public class ServerConnection {
 
-    private static final String HOST  = "localhost";
+    private static String HOST  = "localhost";
     private static final int    PUERTO = 5000;
 
     /** Socket persistente reutilizado después de la autenticación */
@@ -17,6 +19,23 @@ public class ServerConnection {
     private static DataOutputStream escritorActivo = null;
 
     private ServerConnection() {}
+
+    // Permite cambiar la IP del servidor y forzar reconexion
+    public static synchronized void setHost(String ip) {
+        HOST = (ip == null || ip.isBlank()) ? "localhost" : ip.trim();
+
+        try {
+            if (socketActivo != null && !socketActivo.isClosed()) {
+                socketActivo.close();
+            }
+        } catch (IOException ignored) {
+            // Ignorado: se fuerza nueva conexion igual
+        }
+
+        socketActivo = null;
+        lectorActivo = null;
+        escritorActivo = null;
+    }
 
     // ----------------------------------------------------------------
     //  Envía una solicitud de autenticación y devuelve la respuesta JSON

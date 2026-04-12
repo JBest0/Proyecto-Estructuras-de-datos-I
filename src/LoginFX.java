@@ -44,10 +44,18 @@ public class LoginFX {
         lblTitulo.setLayoutY(280);
 
         // ====================== CAMPOS DE TEXTO ======================
+        TextField txtIP = new TextField("localhost");
+        txtIP.setPromptText("IP del servidor (ej: 192.168.1.10)");
+        txtIP.setLayoutX(434);
+        txtIP.setLayoutY(320);
+        txtIP.setPrefWidth(268);
+        txtIP.setPrefHeight(40);
+        txtIP.setStyle("-fx-font-size: 16px; -fx-background-radius: 10;");
+
         TextField txtUsuario = new TextField();
         txtUsuario.setPromptText("Usuario");
         txtUsuario.setLayoutX(434);
-        txtUsuario.setLayoutY(360);
+        txtUsuario.setLayoutY(380);
         txtUsuario.setPrefWidth(268);
         txtUsuario.setPrefHeight(40);
         txtUsuario.setStyle("-fx-font-size: 16px; -fx-background-radius: 10;");
@@ -55,7 +63,7 @@ public class LoginFX {
         PasswordField txtPassword = new PasswordField();
         txtPassword.setPromptText("Contraseña");
         txtPassword.setLayoutX(434);
-        txtPassword.setLayoutY(430);
+        txtPassword.setLayoutY(450);
         txtPassword.setPrefWidth(268);
         txtPassword.setPrefHeight(40);
         txtPassword.setStyle("-fx-font-size: 16px; -fx-background-radius: 10;");
@@ -64,27 +72,28 @@ public class LoginFX {
         lblMensaje.setTextFill(Color.web("#FF5555"));
         lblMensaje.setFont(Font.font("Arial", FontWeight.BOLD, 14));
         lblMensaje.setLayoutX(434);
-        lblMensaje.setLayoutY(480);
+        lblMensaje.setLayoutY(500);
         lblMensaje.setPrefWidth(268);
         lblMensaje.setAlignment(javafx.geometry.Pos.CENTER);
 
         // ====================== BOTONES ======================
         Button btnEntrar = new Button("INICIAR SESIÓN");
         btnEntrar.setLayoutX(434);
-        btnEntrar.setLayoutY(520);
+        btnEntrar.setLayoutY(540);
         btnEntrar.setPrefWidth(268);
         btnEntrar.setPrefHeight(45);
         btnEntrar.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 16px; -fx-font-weight: bold; -fx-background-radius: 10;");
 
         Button btnRegistrar = new Button("REGISTRARSE");
         btnRegistrar.setLayoutX(434);
-        btnRegistrar.setLayoutY(580);
+        btnRegistrar.setLayoutY(600);
         btnRegistrar.setPrefWidth(268);
         btnRegistrar.setPrefHeight(40);
         btnRegistrar.setStyle("-fx-background-color: transparent; -fx-text-fill: #88C0D0; -fx-font-size: 14px; -fx-font-weight: bold; -fx-border-color: #88C0D0; -fx-border-radius: 10;");
 
         // ====================== EVENTOS ======================
         btnEntrar.setOnAction(e -> {
+            String ip = txtIP.getText().trim();
             String user = txtUsuario.getText().trim();
             String pass = txtPassword.getText().trim();
 
@@ -93,6 +102,8 @@ public class LoginFX {
                 return;
             }
 
+            // Actualiza host antes de autenticar
+            ServerConnection.setHost(ip);
             lblMensaje.setText("Conectando...");
             String respuesta = ServerConnection.sendAuth("LOGIN", user, pass);
 
@@ -132,6 +143,7 @@ public class LoginFX {
         });
 
         btnRegistrar.setOnAction(e -> {
+            String ip = txtIP.getText().trim();
             String user = txtUsuario.getText().trim();
             String pass = txtPassword.getText().trim();
 
@@ -140,6 +152,8 @@ public class LoginFX {
                 return;
             }
 
+            // Actualiza host antes de autenticar
+            ServerConnection.setHost(ip);
             // AHORA MANDA 'REGISTRO' QUE ES LO QUE ESPERA EL SERVER
             String respuesta = ServerConnection.sendAuth("REGISTRO", user, pass);
 
@@ -154,7 +168,7 @@ public class LoginFX {
         });
 
         // ====================== AGREGAR AL GRUPO ======================
-        raiz.getChildren().addAll(verLogo, panel, lblTitulo, txtUsuario, txtPassword, lblMensaje, btnEntrar, btnRegistrar);
+        raiz.getChildren().addAll(verLogo, panel, lblTitulo, txtIP, txtUsuario, txtPassword, lblMensaje, btnEntrar, btnRegistrar);
 
         return escena;
     }
