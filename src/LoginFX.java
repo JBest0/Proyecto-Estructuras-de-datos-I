@@ -117,12 +117,26 @@ public class LoginFX {
                         btnEntrar.setText("Cargando...");
                     });
 
-                    Platform.runLater(() -> {
+                    String configJson = ServerConnection.leerMensaje();
+                    if (configJson != null && configJson.contains("initialHp")) {
                         GameConfig config = new GameConfig();
-                        SeleccionFX pantallaSeleccion = new SeleccionFX();
-                        Scene escenaSeleccion = pantallaSeleccion.crearPantalla(inicio, escena, user, config);
-                        inicio.setScene(escenaSeleccion);
-                    });
+                        config.setInitialHp(extraerCampoEntero(configJson, "initialHp", 100));
+                        config.setBaseSpawnRate(extraerCampoEntero(configJson, "baseSpawnRate", 2000));
+                        config.setScorePerKill(extraerCampoEntero(configJson, "scorePerKill", 10));
+
+                        Platform.runLater(() -> {
+                            SeleccionFX pantallaSeleccion = new SeleccionFX();
+                            Scene escenaSeleccion = pantallaSeleccion.crearPantalla(inicio, escena, user, config);
+                            inicio.setScene(escenaSeleccion);
+                        });
+                    } else {
+                        Platform.runLater(() -> {
+                            lblMensaje.setText("Error leyendo config del server.");
+                            btnEntrar.setText("INICIAR SESIÓN");
+                            btnEntrar.setDisable(false);
+                            btnRegistrar.setDisable(false);
+                        });
+                    }
                 } else {
                     Platform.runLater(() -> {
                         if ("ERROR_TIMEOUT".equals(respuesta)) {
