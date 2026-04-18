@@ -1,7 +1,10 @@
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.ConnectException;
+import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 
 /**
  * Gestiona la conexión del cliente con el servidor de juego.
@@ -11,7 +14,9 @@ import java.net.Socket;
 public class ServerConnection {
 
     private static String HOST  = "localhost";
-    private static final int    PUERTO = 5000;
+    private static final int    PUERTO = 5001;
+    private static final int    TIMEOUT_LECTURA_MS = 12000;
+    private static final int    TIMEOUT_CONEXION_MS = 5000;
 
     /** Socket persistente reutilizado después de la autenticación */
     private static Socket socketActivo = null;
@@ -63,8 +68,14 @@ public class ServerConnection {
 
             return lectorActivo.readUTF();
 
+        } catch (SocketTimeoutException e) {
+            limpiarConexion();
+            return "ERROR_TIMEOUT";
+        } catch (ConnectException e) {
+            limpiarConexion();
+            return "ERROR_CONEXION";
         } catch (Exception e) {
-            e.printStackTrace();
+            limpiarConexion();
             return "ERROR_CONEXION";
         }
     }
@@ -87,7 +98,7 @@ public class ServerConnection {
                 // Quitamos el timeout para esperar al rival el tiempo que sea necesario
                 socketActivo.setSoTimeout(0);
                 String msg = lectorActivo.readUTF();
-                socketActivo.setSoTimeout(5000); // Lo volvemos a poner por seguridad
+                socketActivo.setSoTimeout(TIMEOUT_LECTURA_MS); // Lo volvemos a poner por seguridad
                 return msg;
             }
         } catch (IOException e) {
@@ -110,8 +121,9 @@ public class ServerConnection {
     //  Métodos Internos
     private static synchronized void asegurarConexionActiva() throws IOException {
         if (socketActivo == null || socketActivo.isClosed()) {
-            socketActivo = new Socket(HOST, PUERTO);
-            socketActivo.setSoTimeout(5000);
+            socketActivo = new Socket();
+            socketActivo.connect(new InetSocketAddress(HOST, PUERTO), TIMEOUT_CONEXION_MS);
+            socketActivo.setSoTimeout(TIMEOUT_LECTURA_MS);
         }
         if (escritorActivo == null) {
             escritorActivo = new DataOutputStream(socketActivo.getOutputStream());
@@ -127,5 +139,18 @@ public class ServerConnection {
                     .replace("\n", "\\n")
                     .replace("\r", "\\r")
                     .replace("\t", "\\t");
+    }
+
+    private static void limpiarConexion() {
+        try {
+            if (socketActivo != null && !socketActivo.isClosed()) {
+                socketActivo.close();
+            }
+        } catch (IOException ignored) {
+            // Ignorado: estamos limpiando estado de error
+        }
+        socketActivo = null;
+        lectorActivo = null;
+        escritorActivo = null;
     }
 }

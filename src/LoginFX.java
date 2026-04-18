@@ -105,41 +105,39 @@ public class LoginFX {
             // Actualiza host antes de autenticar
             ServerConnection.setHost(ip);
             lblMensaje.setText("Conectando...");
-            String respuesta = ServerConnection.sendAuth("LOGIN", user, pass);
+            btnEntrar.setDisable(true);
+            btnRegistrar.setDisable(true);
 
-            if ("AUTH_OK".equals(respuesta)) {
-                lblMensaje.setText("Esperando oponente...");
-                btnEntrar.setText("Buscando oponente...");
-                btnEntrar.setDisable(true);
-                btnRegistrar.setDisable(true);
+            new Thread(() -> {
+                String respuesta = ServerConnection.sendAuth("LOGIN", user, pass);
 
-                new Thread(() -> {
-                    String configJson = ServerConnection.leerMensaje();
-                    
-                    if (configJson != null && configJson.contains("initialHp")) {
+                if ("AUTH_OK".equals(respuesta)) {
+                    Platform.runLater(() -> {
+                        lblMensaje.setText("Autenticado. Cargando selección...");
+                        btnEntrar.setText("Cargando...");
+                    });
+
+                    Platform.runLater(() -> {
                         GameConfig config = new GameConfig();
-                        config.setInitialHp(extraerCampoEntero(configJson, "initialHp", 100));
-                        config.setBaseSpawnRate(extraerCampoEntero(configJson, "baseSpawnRate", 2000));
-                        config.setScorePerKill(extraerCampoEntero(configJson, "scorePerKill", 10));
-
-                        Platform.runLater(() -> {
-                            GameScreenFX juego = new GameScreenFX();
-                            Scene escenaJuego = juego.crearPantalla(inicio, "Mapa 1", "Avatar 1", user, config);
-                            inicio.setScene(escenaJuego);
-                        });
-                    } else {
-                        Platform.runLater(() -> {
-                            lblMensaje.setText("Error leyendo config del server.");
-                            btnEntrar.setText("INICIAR SESIÓN");
-                            btnEntrar.setDisable(false);
-                            btnRegistrar.setDisable(false);
-                        });
-                    }
-                }).start();
-
-            } else {
-                lblMensaje.setText("Error: " + respuesta);
-            }
+                        SeleccionFX pantallaSeleccion = new SeleccionFX();
+                        Scene escenaSeleccion = pantallaSeleccion.crearPantalla(inicio, escena, user, config);
+                        inicio.setScene(escenaSeleccion);
+                    });
+                } else {
+                    Platform.runLater(() -> {
+                        if ("ERROR_TIMEOUT".equals(respuesta)) {
+                            lblMensaje.setText("Tiempo de espera agotado con el server.");
+                        } else if ("ERROR_AUTH".equals(respuesta)) {
+                            lblMensaje.setText("Usuario o contraseña incorrectos.");
+                        } else {
+                            lblMensaje.setText("Error de conexión con el server.");
+                        }
+                        btnEntrar.setText("INICIAR SESIÓN");
+                        btnEntrar.setDisable(false);
+                        btnRegistrar.setDisable(false);
+                    });
+                }
+            }).start();
         });
 
         btnRegistrar.setOnAction(e -> {
@@ -154,17 +152,29 @@ public class LoginFX {
 
             // Actualiza host antes de autenticar
             ServerConnection.setHost(ip);
-            // AHORA MANDA 'REGISTRO' QUE ES LO QUE ESPERA EL SERVER
-            String respuesta = ServerConnection.sendAuth("REGISTRO", user, pass);
+            btnEntrar.setDisable(true);
+            btnRegistrar.setDisable(true);
 
-            if ("AUTH_OK".equals(respuesta)) {
-                lblMensaje.setTextFill(Color.web("#55FF55"));
-                lblMensaje.setText("Registro exitoso. Inicie sesión.");
-                txtPassword.clear();
-            } else {
-                lblMensaje.setTextFill(Color.web("#FF5555"));
-                lblMensaje.setText("Error: " + respuesta);
-            }
+            new Thread(() -> {
+                String respuesta = ServerConnection.sendAuth("REGISTRO", user, pass);
+
+                Platform.runLater(() -> {
+                    if ("AUTH_OK".equals(respuesta)) {
+                        lblMensaje.setTextFill(Color.web("#55FF55"));
+                        lblMensaje.setText("Registro exitoso. Inicie sesión.");
+                        txtPassword.clear();
+                    } else if ("ERROR_TIMEOUT".equals(respuesta)) {
+                        lblMensaje.setTextFill(Color.web("#FF5555"));
+                        lblMensaje.setText("Tiempo de espera agotado con el server.");
+                    } else {
+                        lblMensaje.setTextFill(Color.web("#FF5555"));
+                        lblMensaje.setText("Error de conexión con el server.");
+                    }
+
+                    btnEntrar.setDisable(false);
+                    btnRegistrar.setDisable(false);
+                });
+            }).start();
         });
 
         // ====================== AGREGAR AL GRUPO ======================

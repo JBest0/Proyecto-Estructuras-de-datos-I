@@ -4,12 +4,14 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+
 import com.google.gson.Gson;
+
+import serverside.datos.GestorDatos;
+import serverside.estructuras.LinkedList;
 import serverside.logica.Emparejador;
 import serverside.modelos.ClienteConectado;
 import serverside.modelos.Usuario;
-import serverside.datos.GestorDatos;
-import serverside.estructuras.LinkedList;
 
 public class GestorServidor {
     private int puerto;
@@ -37,15 +39,27 @@ public class GestorServidor {
     }
 
     private void manejarAutenticacion(Socket socket) {
+        DataOutputStream salida = null;
         try {
             DataInputStream entrada = new DataInputStream(socket.getInputStream());
-            DataOutputStream salida = new DataOutputStream(socket.getOutputStream());
+            salida = new DataOutputStream(socket.getOutputStream());
 
             //Recibir comando y JSON.
             String mensajeCompleto = entrada.readUTF();
-            String[] partes = mensajeCompleto.split(";");
+            String[] partes = mensajeCompleto.split(";", 2);
+            if (partes.length < 2) {
+                salida.writeUTF("ERROR_FORMATO");
+                socket.close();
+                return;
+            }
+
             String comando = partes[0];
             Usuario usuarioCliente = gson.fromJson(partes[1], Usuario.class);
+            if (usuarioCliente == null || usuarioCliente.getUsername() == null || usuarioCliente.getPassword() == null) {
+                salida.writeUTF("ERROR_FORMATO");
+                socket.close();
+                return;
+            }
 
             // Cargar lista base de datos
             LinkedList<Usuario> listaRegistrados = gestorDatos.cargarUsuarios();
@@ -72,11 +86,24 @@ public class GestorServidor {
             }
 
             // 3. Si pasó la validación, va para la cola
+            if (usuarioFinal == null) {
+                salida.writeUTF("ERROR_AUTH");
+                socket.close();
+                return;
+            }
             ClienteConectado nuevoCliente = new ClienteConectado(usuarioFinal, socket);
             emparejador.agregarAJuego(nuevoCliente);
 
         } catch (Exception e) {
             System.out.println("Error en fase de login: " + e.getMessage());
+            try {
+                if (salida != null) {
+                    salida.writeUTF("ERROR_SERVIDOR");
+                }
+                socket.close();
+            } catch (Exception ignored) {
+                // Ignorado: estamos notificando error de manera defensiva
+            }
         }
     }
 
@@ -84,7 +111,10 @@ public class GestorServidor {
     private Usuario buscarEnLista(LinkedList<Usuario> lista, Usuario buscado) {
         for (int i = 0; i < lista.size(); i++) {
             Usuario actual = lista.get(i);
-            if (actual.getUsername().equals(buscado.getUsername()) && 
+            if (actual == null || actual.getUsername() == null || actual.getPassword() == null) {
+                continue;
+            }
+            if (actual.getUsername().equals(buscado.getUsername()) &&
                 actual.getPassword().equals(buscado.getPassword())) {
                 return actual;
             }
