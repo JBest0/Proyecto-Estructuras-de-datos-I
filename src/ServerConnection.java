@@ -109,8 +109,17 @@ public class ServerConnection {
 
     public static String leerMensajeAsync() {
         try {
-            if (lectorActivo != null && lectorActivo.available() > 0) {
-                return lectorActivo.readUTF();
+            if (lectorActivo != null && socketActivo != null && !socketActivo.isClosed()) {
+                int timeoutOriginal = socketActivo.getSoTimeout();
+                try {
+                    // Intento no bloqueante corto para detectar mensajes entrantes del rival.
+                    socketActivo.setSoTimeout(5);
+                    return lectorActivo.readUTF();
+                } catch (SocketTimeoutException ignored) {
+                    return null;
+                } finally {
+                    socketActivo.setSoTimeout(timeoutOriginal);
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();

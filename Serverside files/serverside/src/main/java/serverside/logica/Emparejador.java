@@ -1,8 +1,8 @@
 package serverside.logica;
 
+import serverside.datos.GestorDatos;
 import serverside.estructuras.Queue;
-import serverside.modelos.ClienteConectado;
-import serverside.datos.GestorDatos; 
+import serverside.modelos.ClienteConectado; 
 
 public class Emparejador {
     private Queue<ClienteConectado> colaEspera;
@@ -15,13 +15,13 @@ public class Emparejador {
     }
 
     //cliente en modo de espera hasta que ingrese segundo usuario
-    public void agregarAJuego(ClienteConectado cliente) {
+    public synchronized void agregarAJuego(ClienteConectado cliente) {
         colaEspera.enqueue(cliente);
         System.out.println(cliente.getUsuario().getUsername() + " entró a la cola.");
         intentarEmparejar();
     }
 
-    private void intentarEmparejar() {
+    private synchronized void intentarEmparejar() {
         if (colaEspera.size() >= 2) { 
             ClienteConectado c1 = colaEspera.dequeue();
             ClienteConectado c2 = colaEspera.dequeue();

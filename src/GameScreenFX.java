@@ -97,15 +97,13 @@ public class GameScreenFX {
         labelOponente.setLayoutX(750);
         labelOponente.setLayoutY(20);
 
-        // ====================== GAME OVER ======================
-        labelGameOver = new Label("GAME OVER!");
+        // ====================== RESULTADO FINAL ======================
+        labelGameOver = new Label("PERDISTE!");
         labelGameOver.setFont(Font.font("Arial", FontWeight.BOLD, 72));
         labelGameOver.setTextFill(Color.RED);
-        labelGameOver.setLayoutX(400);
+        labelGameOver.setLayoutX(330);
         labelGameOver.setLayoutY(380);
         labelGameOver.setVisible(false);
-
-        raizJuego.getChildren().add(labelGameOver);
 
         // ====================== ENEMIGO ======================
         ImageView[] enemigoActual = new ImageView[1];
@@ -164,10 +162,15 @@ public class GameScreenFX {
                 // Recibir estado oponente
                 String estadoOp = ServerConnection.leerMensajeAsync();
                 if (estadoOp != null) {
-                    int hpOp = extraerCampoEntero(estadoOp, "hp", 0);
+                    int hpOp = extraerCampoEntero(estadoOp, "hp", -1);
                     int scoreOp = extraerCampoEntero(estadoOp, "score", 0);
                     int nivelOp = extraerCampoEntero(estadoOp, "nivel", 1);
-                    labelOponente.setText("Oponente HP: " + hpOp + " | Score: " + scoreOp + " | Nivel: " + nivelOp);
+                    String hpTexto = (hpOp >= 0) ? String.valueOf(hpOp) : "?";
+                    labelOponente.setText("Oponente HP: " + hpTexto + " | Score: " + scoreOp + " | Nivel: " + nivelOp);
+
+                    if (hpOp == 0 && !gameOver) {
+                        finalizarPartida(true);
+                    }
                 }
 
                 // Enviar mi estado cada 100ms
@@ -307,7 +310,7 @@ public class GameScreenFX {
             }
         });
 
-        raizJuego.getChildren().addAll(verMapaSeleccion, verPersonaje, labelTiempo, barraVida, labelVida, labelJugador, labelOponente);
+        raizJuego.getChildren().addAll(verMapaSeleccion, verPersonaje, labelTiempo, barraVida, labelVida, labelJugador, labelOponente, labelGameOver);
 
         moverEnemigoTimer.start();
         timerGlobal.start();
@@ -325,12 +328,26 @@ public class GameScreenFX {
         else barraVida.setStyle("-fx-accent: red;");
 
         if (vidaActual <= 0 && !gameOver) {
-            gameOver = true;
-            labelGameOver.setVisible(true);
+            finalizarPartida(false);
+        }
+    }
+
+    private void finalizarPartida(boolean victoria) {
+        gameOver = true;
+        if (victoria) {
+            labelGameOver.setText("GANASTE!");
+            labelGameOver.setTextFill(Color.LIMEGREEN);
+            labelGameOver.setLayoutX(360);
+        } else {
+            labelGameOver.setText("PERDISTE!");
+            labelGameOver.setTextFill(Color.RED);
+            labelGameOver.setLayoutX(330);
             String miEstado = "{\"hp\":0,\"score\":" + scoreActual + ",\"nivel\":" + nivelActual + "}";
             ServerConnection.enviarEstado(miEstado);
-            System.out.println("¡GAME OVER! Presiona ESPACIO para volver al menú");
         }
+        labelGameOver.setVisible(true);
+        labelGameOver.toFront();
+        System.out.println((victoria ? "¡GANASTE!" : "¡PERDISTE!") + " Presiona ESPACIO para volver al menú");
     }
 
     private void registrarEliminacion() {
